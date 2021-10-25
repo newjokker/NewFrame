@@ -21,6 +21,7 @@
 import os
 import prettytable
 import os, sys
+import time
 
 this_dir = os.path.dirname(__file__)
 lib_path = os.path.join(this_dir, '..')
@@ -33,6 +34,10 @@ from gevent import monkey
 from gevent.pywsgi import WSGIServer
 import datetime
 
+#
+from JoTools.txkjRes.deteRes import DeteRes
+#
+
 monkey.patch_all()
 from flask import Flask, request, jsonify
 import threading
@@ -41,13 +46,61 @@ app = Flask(__name__)
 
 
 
-@app.route('/record_find', methods=['POST'])
-def demo():
+class LogServer(object):
 
+    def __init__(self, img_dir, sign_dir, xml_dir):
+        self.img_dir = img_dir
+        self.sign_dir = sign_dir
+        self.xml_dir = xml_dir
+        #
+        self.start_time = time.time()
+        self.dete_count = 0
+        self.img_count = 0
+
+    def get_status(self):
+        # 已经检测多少张数据
+        # 一共多少张数据
+        # 花费了多长时间
+        # 取回已经检测的数据
+
+        pass
+
+    def get_dete_res(self):
+        pass
+
+    def start_dete(self):
+        pass
+
+    def stop_dete(self):
+        pass
+
+
+
+@app.route('/get_status', methods=['POST'])
+def get_status():
+    """获取检测状态"""
+    return jsonify(log_server.get_status())
+
+
+@app.route('/get_dete_res', methods=['POST'])
+def get_dete_res():
+    """获取检测结果"""
+    # todo 已经获取的检测结果直接删掉，或者移动到删除文件夹中去
     command_info = request.form['command_info']
     res = parse_command(command_info)
     rsp = {'res': res}
     return jsonify(rsp)
+
+@app.route('/start_dete', methods=['get'])
+def start_dete():
+    """获取检测结果"""
+    # todo 开始检测，创建 sign 文件中检测的标志文件
+
+@app.route('/stop_dete', methods=['get'])
+def stop_dete():
+    """获取检测结果"""
+    # todo 停止检测，删除 sign 文件中检测的标志文件
+
 
 def serv_start():
     global host, portNum
@@ -69,10 +122,11 @@ def parse_args():
 
 if __name__ == "__main__":
 
-
     args = parse_args()
     portNum = args.port
     host = args.host
+
+    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir)
 
     url = r"http://" + host + ":" +  str(portNum) + "/record_find"
     print(url)
