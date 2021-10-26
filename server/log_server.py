@@ -1,23 +1,6 @@
 # -*- coding: utf-8  -*-
 # -*- author: jokker -*-
 
-
-# todo 返回检测进度
-
-# todo 返回检测结果信息，服务读取 xml 解析并返回信息
-
-# todo 开始 | 暂停 检测服务，通过和核心服务之间进行交互（通过删除或者生成一个标志文件实现，每检测一张图片检测一下一个文件是否存在，不存在的话停掉服务, 或者还有什么优雅的方式）
-
-# todo 看  JoTools 中的 for_CSDN 中的 server 怎么写的
-
-# todo 返回
-
-# ----------
-
-# 图片文件夹 | 标志信息文件夹 | xml 存放文件夹 | log 存放文件夹
-
-
-
 import os
 import prettytable
 import os, sys
@@ -27,80 +10,106 @@ this_dir = os.path.dirname(__file__)
 lib_path = os.path.join(this_dir, '..')
 sys.path.insert(0, lib_path)
 
-import numpy as np
 import argparse
-import cv2
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 import datetime
-
 #
 from JoTools.txkjRes.deteRes import DeteRes
+from JoTools.utils.FileOperationUtil import FileOperationUtil
 #
 
 monkey.patch_all()
 from flask import Flask, request, jsonify
-import threading
-import configparser
-app = Flask(__name__)
 
+app = Flask(__name__)
 
 
 class LogServer(object):
 
-    def __init__(self, img_dir, sign_dir, xml_dir):
+    def __init__(self, img_dir, xml_dir, sign_dir, img_count=-1):
         self.img_dir = img_dir
         self.sign_dir = sign_dir
         self.xml_dir = xml_dir
+        self.xml_dir_return = os.path.join(self.sign_dir, "returned_xml")            # 已经返回结果的 xml 路径
+        os.makedirs(self.xml_dir_return, exist_ok=True)
         #
         self.start_time = time.time()
         self.dete_count = 0
-        self.img_count = 0
+        self.img_count = img_count
+        #
+        self.buffer_xml_path_list = []      # 还未返回结果的图片 xml
+
+        print("img dir : {0}".format(self.img_dir))
+        print("xml dir : {0}".format(self.xml_dir))
+        print("sign dir : {0}".format(self.sign_dir))
+
 
     def get_status(self):
-        # 已经检测多少张数据
-        # 一共多少张数据
-        # 花费了多长时间
-        # 取回已经检测的数据
-
-        pass
+        info = {'dete_img_num':-1, 'use_time':-1, 'total_img_num':-1}
+        # 读取新的 xml todo 新的 xml 是不是要存放在一个新的位置比较好？
+        xml_path_list = list(FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
+        dete_count = len(xml_path_list) + self.dete_count
+        #
+        info['dete_img_num'] = dete_count
+        info['use_time'] = time.time() - self.start_time
+        info['total_img_num'] = self.img_count
+        #
+        return info
 
     def get_dete_res(self):
-        pass
+        # get xml path
+        dete_res = []
+        xml_path_list = (FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
+        for each_xml_path in xml_path_list:
+            if each_xml_path not in self.buffer_xml_path_list:
+                self.buffer_xml_path_list.append(each_xml_path)
+        # merge dete res
+        for each_xml_path in self.buffer_xml_path_list:
+            each_dete_res = DeteRes(each_xml_path)
+            dete_res.extend(each_dete_res.get_fzc_format())
+        # empty buffer xml
+        self.dete_count += len(self.buffer_xml_path_list)
+        FileOperationUtil.move_file_to_folder(self.buffer_xml_path_list, self.xml_dir_return, is_clicp=True)
+        self.buffer_xml_path_list = []
+        return {'dete_res_num':len(dete_res)}
 
     def start_dete(self):
-        pass
+        """没有之间的文件，就不进行检测"""
+        start_sign_txt_path = os.path.join(self.sign_dir, 'start_dete.txt')
+        sign_txt = open(start_sign_txt_path, 'w')
+        sign_txt.close()
 
     def stop_dete(self):
-        pass
+        start_sign_txt_path = os.path.join(self.sign_dir, 'start_dete')
+        if os.path.exists(start_sign_txt_path):
+            os.remove(start_sign_txt_path)
 
 
-
-@app.route('/get_status', methods=['POST'])
+@app.route('/log_server/get_status', methods=['get'])
 def get_status():
     """获取检测状态"""
     return jsonify(log_server.get_status())
 
-
-@app.route('/get_dete_res', methods=['POST'])
+@app.route('/log_server/get_dete_res', methods=['POST'])
 def get_dete_res():
     """获取检测结果"""
     # todo 已经获取的检测结果直接删掉，或者移动到删除文件夹中去
-    command_info = request.form['command_info']
-    res = parse_command(command_info)
-    rsp = {'res': res}
-    return jsonify(rsp)
+    # command_info = request.form['command_info']
+    # res = parse_command(command_info)
+    return jsonify(log_server.get_dete_res())
 
-@app.route('/start_dete', methods=['get'])
+@app.route('/log_server/start_dete', methods=['get'])
 def start_dete():
     """获取检测结果"""
-    # todo 开始检测，创建 sign 文件中检测的标志文件
+    log_server.start_dete()
+    return jsonify({"status":"OK"})
 
-@app.route('/stop_dete', methods=['get'])
+@app.route('/log_server/stop_dete', methods=['get'])
 def stop_dete():
     """获取检测结果"""
-    # todo 停止检测，删除 sign 文件中检测的标志文件
-
+    log_server.stop_dete()
+    return jsonify({"status":"OK"})
 
 def serv_start():
     global host, portNum
@@ -126,14 +135,14 @@ if __name__ == "__main__":
     portNum = args.port
     host = args.host
 
-    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir)
+    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir, len(FileOperationUtil.re_all_file(args.img_dir, endswitch=['.jpg', '.JPG'])))
 
-    url = r"http://" + host + ":" +  str(portNum) + "/record_find"
+    url = r"http://" + host + ":" +  str(portNum) + "/log_server"
+
     print(url)
 
     # ----------------------------------------------------------------------------------
 
-    a = RecordFind()
     serv_start()
 
 
