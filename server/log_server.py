@@ -49,7 +49,7 @@ class LogServer(object):
         info = {'dete_img_num':-1, 'use_time':-1, 'total_img_num':-1}
         xml_path_list = list(FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
         dete_count = len(xml_path_list) + self.dete_count
-        #
+        # fixme 这边去定义结束时间并不正确，要修改一下
         if dete_count == self.img_count and self.stop_time is None:
             self.stop_time = time.time()
         #
@@ -64,8 +64,11 @@ class LogServer(object):
         #
         return info
 
-    def get_dete_res(self):
+    def get_dete_res(self, assign_img_count=-1):
         # get xml path
+
+        # todo 返回指定个数的文件结果，默认值为 -1 是返回 buffer 中所有的结果
+
         dete_res_dict = {}
         xml_path_list = (FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
         for each_xml_path in xml_path_list:
