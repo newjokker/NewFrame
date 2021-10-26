@@ -35,6 +35,7 @@ class LogServer(object):
         os.makedirs(self.xml_dir_return, exist_ok=True)
         #
         self.start_time = time.time()
+        self.stop_time = None
         self.dete_count = 0
         self.img_count = img_count
         #
@@ -49,8 +50,16 @@ class LogServer(object):
         xml_path_list = list(FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
         dete_count = len(xml_path_list) + self.dete_count
         #
+        if dete_count == self.img_count and self.stop_time is None:
+            self.stop_time = time.time()
+        #
+        if self.stop_time:
+            use_time = self.stop_time - self.start_time
+        else:
+            use_time = time.time() - self.start_time
+        #
         info['dete_img_num'] = dete_count
-        info['use_time'] = time.time() - self.start_time
+        info['use_time'] = use_time
         info['total_img_num'] = self.img_count
         #
         return info
@@ -72,6 +81,10 @@ class LogServer(object):
         FileOperationUtil.move_file_to_folder(self.buffer_xml_path_list, self.xml_dir_return, is_clicp=True)
         self.buffer_xml_path_list = []
         return dete_res_dict
+
+    def get_his_dete_res(self, img_name):
+        """获取历史检测结果"""
+        pass
 
     def start_dete(self):
         """没有之间的文件，就不进行检测"""
