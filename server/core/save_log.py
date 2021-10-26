@@ -5,9 +5,6 @@ import os
 from JoTools.utils.CsvUtil import CsvUtil
 
 
-# todo 可以设置为单例模式，
-
-
 class SaveLog():
 
     def __init__(self, log_path, img_count, csv_path=None):
