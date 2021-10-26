@@ -44,10 +44,8 @@ class LogServer(object):
         print("xml dir : {0}".format(self.xml_dir))
         print("sign dir : {0}".format(self.sign_dir))
 
-
     def get_status(self):
         info = {'dete_img_num':-1, 'use_time':-1, 'total_img_num':-1}
-        # 读取新的 xml todo 新的 xml 是不是要存放在一个新的位置比较好？
         xml_path_list = list(FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
         dete_count = len(xml_path_list) + self.dete_count
         #
@@ -59,7 +57,7 @@ class LogServer(object):
 
     def get_dete_res(self):
         # get xml path
-        dete_res = []
+        dete_res_dict = {}
         xml_path_list = (FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml']))
         for each_xml_path in xml_path_list:
             if each_xml_path not in self.buffer_xml_path_list:
@@ -67,12 +65,13 @@ class LogServer(object):
         # merge dete res
         for each_xml_path in self.buffer_xml_path_list:
             each_dete_res = DeteRes(each_xml_path)
-            dete_res.extend(each_dete_res.get_fzc_format())
+            xml_name = FileOperationUtil.bang_path(each_xml_path)[1]
+            dete_res_dict[xml_name] = each_dete_res.get_fzc_format()
         # empty buffer xml
         self.dete_count += len(self.buffer_xml_path_list)
         FileOperationUtil.move_file_to_folder(self.buffer_xml_path_list, self.xml_dir_return, is_clicp=True)
         self.buffer_xml_path_list = []
-        return {'dete_res_num':len(dete_res)}
+        return dete_res_dict
 
     def start_dete(self):
         """没有之间的文件，就不进行检测"""
@@ -94,7 +93,6 @@ def get_status():
 @app.route('/log_server/get_dete_res', methods=['POST'])
 def get_dete_res():
     """获取检测结果"""
-    # todo 已经获取的检测结果直接删掉，或者移动到删除文件夹中去
     # command_info = request.form['command_info']
     # res = parse_command(command_info)
     return jsonify(log_server.get_dete_res())
@@ -135,7 +133,7 @@ if __name__ == "__main__":
     portNum = args.port
     host = args.host
 
-    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir, len(FileOperationUtil.re_all_file(args.img_dir, endswitch=['.jpg', '.JPG'])))
+    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir, len(list(FileOperationUtil.re_all_file(args.img_dir, endswitch=['.jpg', '.JPG']))))
 
     url = r"http://" + host + ":" +  str(portNum) + "/log_server"
 
