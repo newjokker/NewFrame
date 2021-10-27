@@ -11,7 +11,43 @@ import shutil
 import argparse
 from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
-from .core.save_log import SaveLog
+from JoTools.utils.CsvUtil import CsvUtil
+
+
+class SaveLog():
+
+    def __init__(self, log_path, img_count, csv_path=None):
+        self.log_path = log_path
+        self.img_count = img_count
+        self.img_index = 1
+        self.csv_path = csv_path
+        self.csv_list = [['filename', 'name', 'score', 'xmin', 'ymin', 'xmax', 'ymax']]
+        # empty log
+        if os.path.exists(self.log_path):
+            os.remove(self.log_path)
+
+    def add_log(self, img_name):
+        log = open(self.log_path, 'a')
+        log.write("process:{0}/{1} {2}\n".format(self.img_index, self.img_count, img_name))
+        self.img_index += 1
+        log.close()
+
+    def add_csv_info(self, dete_res, img_name):
+        """add one csv info"""
+        for dete_obj in dete_res:
+            self.csv_list.append([img_name, dete_obj.tag, dete_obj.conf, dete_obj.x1, dete_obj.y1, dete_obj.x2, dete_obj.y2])
+
+    def read_img_list_finshed(self):
+        log = open(self.log_path, 'a')
+        log.write("Loading Finished\n")
+        log.close()
+
+    def close(self):
+        log = open(self.log_path, 'a')
+        log.write("---process complete---\n")
+        log.close()
+        # save csv
+        CsvUtil.save_list_to_csv(self.csv_list, self.csv_path)
 
 
 class FTserver(object):
@@ -47,25 +83,38 @@ class FTserver(object):
         """获取最长的检测时间，超过检测时间自动退出并保存日志和 csv"""
         self.max_dete_time = assign_each_dete_use_time * self.all_img_count
 
+    def empty_dir(self, assign_dir):
+        """清空文件夹中的文件"""
+        for each_file_path in FileOperationUtil.re_all_file(assign_dir):
+            os.remove(each_file_path)
+
     def empty_history_info(self):
         """清空历史数据"""
 
+        # fixme 不能删了再去创建，因为权限会变得不一样
+
         if os.path.exists(self.res_dir):
-            shutil.rmtree(self.res_dir)
+            self.empty_dir(self.res_dir)
 
         if os.path.exists(self.sign_dir):
-            shutil.rmtree(self.sign_dir)
+            self.empty_dir(self.res_dir)
 
         if os.path.exists(self.xml_dir):
-            shutil.rmtree(self.xml_dir)
+            self.empty_dir(self.res_dir)
 
         os.makedirs(self.res_dir, exist_ok=True)
-        os.makedirs(sign_dir, exist_ok=True)
-        os.makedirs(xml_dir, exist_ok=True)
+        os.makedirs(self.sign_dir, exist_ok=True)
+        os.makedirs(self.xml_dir, exist_ok=True)
 
     def start_monitor(self):
         """开始监听"""
+        # store img name and suffix
         img_name_dict = {}
+        img_path_list = list(FileOperationUtil.re_all_file(self.img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+        for each_img_path in img_path_list:
+            img_name = FileOperationUtil.bang_path(each_img_path)[1]
+            img_name_dict[img_name] = os.path.split(each_img_path)[1]
+        #
         while True:
             # dete end
             if self.save_log.img_index > self.save_log.img_count:
@@ -77,16 +126,18 @@ class FTserver(object):
                 self.stop_time = time.time()
                 return
 
-            xml_path_list = FileOperationUtil.re_all_file(res_dir, endswitch=['.xml'])
+            xml_path_list = FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml'])
 
             time.sleep(3)
 
             for each_xml_path in xml_path_list:
+                print('-'*100)
                 print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
                 try:
                     # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
+                    each_dete_res.print_as_fzc_format()
                     img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
                     self.save_log.add_log(img_name)
                     self.save_log.add_csv_info(each_dete_res, img_name)
@@ -119,8 +170,8 @@ def parse_args():
     parser.add_argument('--img_dir',dest='img_dir',type=str, default=r"/usr/input_picture")
     parser.add_argument('--xml_dir',dest='xml_dir',type=str, default=r"/usr/input_picture")
     parser.add_argument('--res_dir',dest='res_dir',type=str, default=r"/usr/input_picture")
-    parser.add_argument('--sign_dir',dest='rsign_dir',type=str, default=r"/usr/input_picture")
-    parser.add_argument('--mul_progress_num',dest='mul_progress_num',type=str, default=1)
+    parser.add_argument('--sign_dir',dest='sign_dir',type=str, default=r"/usr/input_picture")
+    parser.add_argument('--mul_progress_num',dest='mul_progress_num',type=int, default=1)
     #
     args = parser.parse_args()
     return args
