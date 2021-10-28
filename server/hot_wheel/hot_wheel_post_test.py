@@ -10,10 +10,10 @@ from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
 
 
-def post_img(each_img_path):
+def post_img(each_img_path, is_end='False'):
     global post_img_num
     post_img_num += 1
-    url = r"http://192.168.3.74:3232/receive_server/post_img"
+    url = r"http://192.168.3.74:3232/receive_server/post_img/{0}".format(is_end)
     res = requests.post(url=url, data={'filename': os.path.split(each_img_path)[1]}, files={'image': open(each_img_path, 'rb')})
     print("{0} : {1}".format(post_img_num, res.text.strip()))
 
@@ -25,6 +25,8 @@ if __name__ == "__main__":
     post_img_num = 0
     img_dir = r"/home/ldq/fangtian_test/fangtian_nc_kkx"
     img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+    img_path_end = img_path_list[-1]
+    img_path_list = img_path_list[:-2]
 
     pool = Pool()
     pool.map(post_img, img_path_list)
@@ -32,3 +34,5 @@ if __name__ == "__main__":
     pool.join()
 
     print("use time : {0}".format(time.time() - start_time))
+
+    post_img(img_path_end, is_end=True)

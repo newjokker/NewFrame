@@ -37,13 +37,16 @@ app = Flask(__name__)
 # fixme 某张图片检测失败的话会将图片拷贝到一个专门的地址，等待其他图片检测完了之后再去检测
 
 
-@app.route('/receive_server/post_img', methods=['post'])
-def receive_img():
+@app.route('/receive_server/post_img/<is_end>', methods=['post'])
+def receive_img(is_end):
     """获取检测状态"""
+
+    # fixme 推送的是最后一张的时候，直接加上 txt 记录
+
     global dete_img_num, img_dir, random_dir_name, batch_size, sign_txt_path
 
     # a batch img
-    if dete_img_num % batch_size == batch_size-1:
+    if dete_img_num % batch_size == batch_size-1 or is_end == 'True':
         with open(sign_txt_path, 'a+') as sign_txt_file:
             sign_txt_file.write(random_dir_name + '\n')
         random_dir_name = str(uuid.uuid1())
