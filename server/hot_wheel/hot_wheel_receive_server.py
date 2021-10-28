@@ -40,16 +40,15 @@ app = Flask(__name__)
 @app.route('/receive_server/post_img', methods=['post'])
 def receive_img():
     """获取检测状态"""
-    global dete_img_num, img_dir, random_dir_name, batch_size
+    global dete_img_num, img_dir, random_dir_name, batch_size, sign_txt_path
 
     # a batch img
     if dete_img_num % batch_size == batch_size-1:
-        random_dir_path = os.path.join(img_dir, random_dir_name)
-        os.makedirs(random_dir_path, exist_ok=True)
-        #
         with open(sign_txt_path, 'a+') as sign_txt_file:
             sign_txt_file.write(random_dir_name + '\n')
         random_dir_name = str(uuid.uuid1())
+        random_dir_path = os.path.join(img_dir, random_dir_name)
+        os.makedirs(random_dir_path, exist_ok=True)
 
     dete_img_num += 1
 
@@ -61,6 +60,10 @@ def receive_img():
         name = request.files['image'].filename
         # save
         save_dir = os.path.join(img_dir, random_dir_name)
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         img_save_path = os.path.join(save_dir, name)
         # save img
         upload_file.save(img_save_path)
@@ -105,6 +108,8 @@ if __name__ == "__main__":
         os.remove(sign_txt_path)
 
     random_dir_name = str(uuid.uuid1())
+    random_dir_path = os.path.join(img_dir, random_dir_name)
+    os.makedirs(random_dir_path, exist_ok=True)
 
     url = r"http://" + host + ":" +  str(portNum) + "/receive_server"
 
