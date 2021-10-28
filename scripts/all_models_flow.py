@@ -58,7 +58,8 @@ def parse_args():
     parser.add_argument('--modelList',dest='modelList',default="M1,M2,M3,M4,M5,M6,M7,M8,M9")
     parser.add_argument('--jsonPath',dest='jsonPath', default=r"/usr/input_picture_attach/pictureName.json")
     parser.add_argument('--outputDir',dest='outputDir', default=r"/usr/output_dir")
-    # 
+    parser.add_argument('--signDir',dest='signDir', default=r"/usr/output_dir")
+    #
     parser.add_argument('--scriptIndex',dest='scriptIndex', default=r"1-1")
     #
     parser.add_argument('--gpuID', dest='gpuID',type=int,default=0)
@@ -79,6 +80,27 @@ def get_json_dict(json_path):
         #img_name_json_dict[each["originFileName"]] = each["fileName"]
         img_name_json_dict[each["fileName"]] = each["originFileName"]
     return img_name_json_dict
+
+def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
+    """从 sign_dir 中读取需要处理的文件"""
+
+    # fixme 每一个进程分配使用不一样的文件夹，根据进程的 index 决定使用哪一个文件夹，很少的文件可以通过减小 batch size 来进行调节
+
+    # fixme batch 参数可以初始化的时候进行传入
+    batch_size = 50
+
+    img_dir_list = []
+    with open(sign_txt_path, 'r') as sign_txt_file:
+        for each_line in sign_txt_file:
+            each_img_dir = os.path.join(img_dir, each_line.strip())
+            img_dir_list.append(each_img_dir)
+    #
+    for each_img_dir in range(0, script_num, script_index):
+        if os.path.exists(each_img_dir):
+            img_path_list = list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+            if len(img_path_list) != batch_size:
+                return img_path_list
+    return []
 
 def screen(y, img):
     #screen brightness
@@ -728,6 +750,11 @@ def model_dete(img_path, model_dict, model_list=None):
 
 if __name__ == '__main__':
 
+    # todo 绑定一个待检测 TXT 文件，扫描在这个文件中所有待检测的文件夹，不断扫描，直到程序被关闭
+
+    #
+
+
     args = parse_args()
 
     # input: (1) model_list (str)
@@ -742,8 +769,10 @@ if __name__ == '__main__':
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
+    sign_dir = args.signtDir.strip()
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
+    sign_txt_path = os.path.join(sign_dir, "img_dir_to_dete.txt")
     #
     script_num, script_index = args.scriptIndex.strip().split('-')
     script_num, script_index = int(script_num), int(script_index)
@@ -789,42 +818,48 @@ if __name__ == '__main__':
     max_use_time = 9.5 * len(img_path_list)
 
 
-    # dete
-    for each_img_index in range(script_index-1, len(img_path_list), script_num):
+    while True:
 
-        each_img_path = img_path_list[each_img_index]
-        
-        # print(each_img_path)
-        #
-        each_img_name = os.path.split(each_img_path)[1]
-        if each_img_name in img_name_json_dict:
-            #each_img_chinese_name = img_name_json_dict[each_img_name]
-            each_img_chinese_name = ""
-        else:
-            # each_img_chinese_name = each_img_name
-            each_img_chinese_name = ""
-        #
-        try:
-            # over time continue 
-            if time.time() - start_time < max_use_time:
-                each_model_list = get_model_list_from_img_name(each_img_chinese_name, assign_model_list)
-                
-                print(each_img_index, each_img_path)
-                print(each_model_list)
-                #print('-'*50)
-                
-                # print("* each_model_list ：{0}".format(each_model_list))
-                each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
-                #each_dete_res = model_dete(each_img_path, model_dict, ['nc'])
-                #dete_log.add_csv_info(each_dete_res, each_img_name)
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
+        img_path_list = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
 
-        #dete_log.add_log(each_img_name)
-        #
-        print('-'*50)
+        # dete
+        for each_img_index in img_path_list:
+
+            each_img_path = img_path_list[each_img_index]
+
+            # print(each_img_path)
+            #
+            each_img_name = os.path.split(each_img_path)[1]
+            if each_img_name in img_name_json_dict:
+                #each_img_chinese_name = img_name_json_dict[each_img_name]
+                each_img_chinese_name = ""
+            else:
+                # each_img_chinese_name = each_img_name
+                each_img_chinese_name = ""
+            #
+            try:
+                # over time continue
+                if time.time() - start_time < max_use_time:
+                    each_model_list = get_model_list_from_img_name(each_img_chinese_name, assign_model_list)
+
+                    print(each_img_index, each_img_path)
+                    print(each_model_list)
+                    #print('-'*50)
+
+                    # print("* each_model_list ：{0}".format(each_model_list))
+                    each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
+                    #each_dete_res = model_dete(each_img_path, model_dict, ['nc'])
+                    #dete_log.add_csv_info(each_dete_res, each_img_name)
+            except Exception as e:
+                print(e)
+                print(e.__traceback__.tb_frame.f_globals["__file__"])
+                print(e.__traceback__.tb_lineno)
+
+            #dete_log.add_log(each_img_name)
+            #
+            print('-'*50)
+
+        time.sleep(5)
 
     #
     #dete_log.close()

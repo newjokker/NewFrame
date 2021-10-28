@@ -28,7 +28,14 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# fixme 小服务的生命周期问题，服务生命时候关闭，由谁去关闭（allflow）当 allflow 检测到已经完成的时候会关闭小服务
+# fixme 小服务的生命周期问题，服务什么时候关闭，由谁去关闭（allflow）当 allflow 检测到已经完成的时候会关闭小服务
+
+# fixme 怎么才能算检测完毕，就是在 sign 文件夹中增加一个标志文件，启动 docker 的时候就应该输入一个当次要检测图片的最大值，超过这个值 docker 中的一些服务就会被自动关掉，或者只要有图就会自动检测，不存在检测完毕的问题，只有所有图片都已检测完毕
+
+# fixme 张一辰试了一下使用 redis 存储一张图 0.16 s 读取一张图几乎不用时间
+
+# fixme 某张图片检测失败的话会将图片拷贝到一个专门的地址，等待其他图片检测完了之后再去检测
+
 
 @app.route('/receive_server/post_img', methods=['post'])
 def receive_img():
