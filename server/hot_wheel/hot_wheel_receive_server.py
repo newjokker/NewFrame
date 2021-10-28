@@ -46,12 +46,15 @@ def receive_img(is_end):
     global dete_img_num, img_dir, random_dir_name, batch_size, sign_txt_path
 
     # a batch img
-    if dete_img_num % batch_size == batch_size-1 or is_end == 'True':
+    if dete_img_num % batch_size == batch_size-1:
         with open(sign_txt_path, 'a+') as sign_txt_file:
             sign_txt_file.write(random_dir_name + '\n')
         random_dir_name = str(uuid.uuid1())
         random_dir_path = os.path.join(img_dir, random_dir_name)
         os.makedirs(random_dir_path, exist_ok=True)
+    elif is_end == 'True':
+        with open(sign_txt_path, 'a+') as sign_txt_file:
+            sign_txt_file.write(random_dir_name + '\n')
 
     dete_img_num += 1
 
