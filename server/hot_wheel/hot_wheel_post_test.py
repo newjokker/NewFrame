@@ -15,7 +15,7 @@ def post_img(each_img_path):
     post_img_num += 1
     url = r"http://192.168.3.74:3232/receive_server/post_img"
     res = requests.post(url=url, data={'filename': os.path.split(each_img_path)[1]}, files={'image': open(each_img_path, 'rb')})
-    print("{0} : {1}".format(post_img_num, res))
+    print("{0} : {1}".format(post_img_num, res.text.strip()))
 
 
 if __name__ == "__main__":
