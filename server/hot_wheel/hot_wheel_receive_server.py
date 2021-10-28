@@ -2,10 +2,13 @@
 # -*- author: jokker -*-
 
 import os
+import base64
 import prettytable
-import os, sys
+import sys
 import time
 import uuid
+import numpy as np
+import cv2
 
 this_dir = os.path.dirname(__file__)
 lib_path = os.path.join(this_dir, '..')
@@ -33,30 +36,29 @@ app = Flask(__name__)
 def receive_img():
     """获取检测状态"""
 
-    # todo 文件到达多少张就会放到一个文件夹中
-    # todo 每次检测一个文件夹中的数据，一次性推送给 java
-
     global dete_img_num, img_dir, random_dir_name
+
+    # a batch img
+    if dete_img_num % 20 == 0:
+        random_dir_name = str(uuid.uuid1())
+        random_dir_path = os.path.join(img_dir, random_dir_name)
+        os.makedirs(random_dir_path, exist_ok=True)
+        # todo 在 sign 文件夹中记录需要检测数据 txt 中的一行记录
 
     dete_img_num += 1
 
-    # a batch img
-    if dete_img_num % 200 == 0:
-        random_dir_name = str(uuid.uuid1())
-        # todo 在 sign 文件夹中记录需要检测数据 txt 中的一行记录
-
     try:
         # img
-        base64_code = request.files['image'].stream.read()
-        img_array = np.fromstring(base64_code, np.uint8)
-        im = cv2.imdecode(img_array, cv2.COLOR_BGR2RGB)
+        upload_file = request.files['image']
         # name
         # name = request.form['filename']
         name = request.files['image'].filename
         # save
         save_dir = os.path.join(img_dir, random_dir_name)
-        img_save_path = os.path.join(save_dir, name + '.jpg')
-        cv2.imwrite(img_save_path, im)
+        img_save_path = os.path.join(save_dir, name)
+        # save img
+        upload_file.save(img_save_path)
+
         return jsonify({"status":"OK"})
     except Exception as e:
         return jsonify({"status": "ERROR:{0}".format(e)})
@@ -70,7 +72,7 @@ def serv_start():
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
     parser.add_argument('--port', dest='port', type=int, default=3232)
-    parser.add_argument('--host', dest='host', type=str, default='192.168.3.155')   # 这边要是写 127 的话只能在本服务器访问了，要改为本机的地址
+    parser.add_argument('--host', dest='host', type=str, default='0.0.0.0')
     #
     parser.add_argument('--img_dir', dest='img_dir', type=str, default='/')
     parser.add_argument('--sign_dir', dest='sign_dir', type=str, default='/')
@@ -86,6 +88,7 @@ if __name__ == "__main__":
     host = args.host
 
     img_dir = args.img_dir
+    sign_dir = args.sign_dir
 
     dete_img_num = 0
 
