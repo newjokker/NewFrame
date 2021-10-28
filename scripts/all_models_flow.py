@@ -43,12 +43,11 @@ from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
 from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
 import judge_angle_fun
 #
-from .fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
+from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 
 
 # fixme 将读取图片全部改为传入矩阵的方式进行，
 # fixme 使用 JoTools 函数
-
 
 
 def parse_args():
@@ -58,7 +57,7 @@ def parse_args():
     parser.add_argument('--modelList',dest='modelList',default="M1,M2,M3,M4,M5,M6,M7,M8,M9")
     parser.add_argument('--jsonPath',dest='jsonPath', default=r"/usr/input_picture_attach/pictureName.json")
     parser.add_argument('--outputDir',dest='outputDir', default=r"/usr/output_dir")
-    parser.add_argument('--signDir',dest='signDir', default=r"/usr/output_dir")
+    parser.add_argument('--signDir',dest='signDir', default=r"/usr/sign")
     #
     parser.add_argument('--scriptIndex',dest='scriptIndex', default=r"1-1")
     #
@@ -89,18 +88,24 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
     # fixme batch 参数可以初始化的时候进行传入
     batch_size = 50
 
+    if not os.path.exists(sign_txt_path):
+        print("* sign txt dir not exists : {0}".format(sign_txt_path))
+        return [], None
+
     img_dir_list = []
     with open(sign_txt_path, 'r') as sign_txt_file:
         for each_line in sign_txt_file:
             each_img_dir = os.path.join(img_dir, each_line.strip())
             img_dir_list.append(each_img_dir)
     #
-    for each_img_dir in range(0, script_num, script_index):
+    for each_index in range(script_index-1, len(img_dir_list), script_num):
+        each_img_dir = img_dir_list[each_index]
         if os.path.exists(each_img_dir):
             img_path_list = list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-            if len(img_path_list) != batch_size:
-                return img_path_list
-    return []
+            if len(img_path_list) != 0:
+                return img_path_list, each_img_dir
+    return [], None
+
 
 def screen(y, img):
     #screen brightness
@@ -750,26 +755,12 @@ def model_dete(img_path, model_dict, model_list=None):
 
 if __name__ == '__main__':
 
-    # todo 绑定一个待检测 TXT 文件，扫描在这个文件中所有待检测的文件夹，不断扫描，直到程序被关闭
-
-    #
-
-
     args = parse_args()
 
-    # input: (1) model_list (str)
-
-    # output (1) csv, log  | programe.log
-
-    # fixme 同一个位置只能输出一个框，按照重要性进行排序
-   
-    # start_time = time.time()
-
-    # ---------------------------
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
-    sign_dir = args.signtDir.strip()
+    sign_dir = args.signDir.strip()
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
     sign_txt_path = os.path.join(sign_dir, "img_dir_to_dete.txt")
@@ -784,10 +775,9 @@ if __name__ == '__main__':
     print("* {0} : {1}".format("csv_path", csv_path))
     print("* script_num-script_index : {0}-{1}".format(script_num, script_index))
     print('-'*50)
-    # ---------------------------
 
     # json path file
-    img_name_json_dict = get_json_dict(json_path)
+    # img_name_json_dict = get_json_dict(json_path)
 
     # model_list
     assign_model_list = args.modelList.strip().split(',')
@@ -795,22 +785,15 @@ if __name__ == '__main__':
     # get img
     img_path_list = list(FileOperationUtil.re_all_file(img_dir, lambda x:str(x).endswith(('.jpg', '.JPG', '.png', '.PNG'))))
 
-    # init log
-    #dete_log = SaveLog(log_path, len(img_path_list), csv_path)
-    #dete_log.read_img_list_finshed()
-
     # warm up
+    # todo 这边进行并行处理
     print("* start warm model ")
     scriptName = os.path.basename(__file__).split('.')[0]
     #
-    # all_model_list = ['nc' ,'jyzZB', 'fzc', 'fzcRust', 'ljcRust', 'fncDK', 'kkxTC', 'kkxQuiting', 'kkxRust', 'waipo', 'xjQX']
     all_model_list = ['nc' ,'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
-    #all_model_list = ['nc']
 
     model_dict = model_restore(args, scriptName, all_model_list)
-    #model_dict = {}
     print("* warm model success ")
-
 
     start_time = time.time()
 
@@ -819,58 +802,38 @@ if __name__ == '__main__':
 
 
     while True:
-
-        img_path_list = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
-
+        img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
         # dete
-        for each_img_index in img_path_list:
-
-            each_img_path = img_path_list[each_img_index]
-
-            # print(each_img_path)
-            #
-            each_img_name = os.path.split(each_img_path)[1]
-            if each_img_name in img_name_json_dict:
-                #each_img_chinese_name = img_name_json_dict[each_img_name]
-                each_img_chinese_name = ""
-            else:
-                # each_img_chinese_name = each_img_name
-                each_img_chinese_name = ""
-            #
+        for each_img_path in img_path_list:
             try:
                 # over time continue
                 if time.time() - start_time < max_use_time:
-                    each_model_list = get_model_list_from_img_name(each_img_chinese_name, assign_model_list)
-
-                    print(each_img_index, each_img_path)
-                    print(each_model_list)
-                    #print('-'*50)
-
-                    # print("* each_model_list ：{0}".format(each_model_list))
+                    each_model_list = get_model_list_from_img_name("", assign_model_list)
                     each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
-                    #each_dete_res = model_dete(each_img_path, model_dict, ['nc'])
-                    #dete_log.add_csv_info(each_dete_res, each_img_name)
+                    if os.path.exists(each_img_path):
+                        os.remove(each_img_path)
             except Exception as e:
                 print(e)
                 print(e.__traceback__.tb_frame.f_globals["__file__"])
                 print(e.__traceback__.tb_lineno)
-
-            #dete_log.add_log(each_img_name)
             #
             print('-'*50)
+        # 当检测完一个文件夹之后，删除这个文件夹
+        if each_img_dir is not None:
+            if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
+                os.remove(each_img_dir)
 
-        time.sleep(5)
-
+        time.sleep(2)
     #
     #dete_log.close()
 
-    end_time = time.time()
-    # add file to output_dir
-    res_txt = os.path.join(output_dir, "res_txt")
-    os.makedirs(res_txt, exist_ok=True)
-    txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
-    with open(txt_path, 'w') as txt_file:
-        txt_file.write('done')
-    print("* check img {0} use time {1}".format(len(img_path_list), end_time - start_time))
+    # end_time = time.time()
+    # # add file to output_dir
+    # res_txt = os.path.join(output_dir, "res_txt")
+    # os.makedirs(res_txt, exist_ok=True)
+    # txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
+    # with open(txt_path, 'w') as txt_file:
+    #     txt_file.write('done')
+    # print("* check img {0} use time {1}".format(len(img_path_list), end_time - start_time))
 
 

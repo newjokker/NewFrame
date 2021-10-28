@@ -28,7 +28,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# fixme 小服务的生命周期问题，服务什么时候关闭，由谁去关闭（allflow）当 allflow 检测到已经完成的时候会关闭小服务
+# fixme 小服务的生命周期问题，服务什么时候关闭，由谁去关闭（allflow）当 allflow 检测到已经完成的时候会关闭小服务，一整个检测服务结束了，小服务和核心的 docker 服务就会被关闭
 
 # fixme 怎么才能算检测完毕，就是在 sign 文件夹中增加一个标志文件，启动 docker 的时候就应该输入一个当次要检测图片的最大值，超过这个值 docker 中的一些服务就会被自动关掉，或者只要有图就会自动检测，不存在检测完毕的问题，只有所有图片都已检测完毕
 
