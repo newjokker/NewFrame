@@ -782,9 +782,6 @@ if __name__ == '__main__':
     # model_list
     assign_model_list = args.modelList.strip().split(',')
 
-    # get img
-    img_path_list = list(FileOperationUtil.re_all_file(img_dir, lambda x:str(x).endswith(('.jpg', '.JPG', '.png', '.PNG'))))
-
     # warm up
     # todo 这边进行并行处理
     print("* start warm model ")
@@ -797,10 +794,6 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    # max use time
-    max_use_time = 9.5 * len(img_path_list)
-
-
     while True:
         img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
         # dete
@@ -809,11 +802,11 @@ if __name__ == '__main__':
             print("* {0} : {1}".format(dete_img_index, each_img_path))
             try:
                 # over time continue
-                if time.time() - start_time < max_use_time:
-                    each_model_list = get_model_list_from_img_name("", assign_model_list)
-                    each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
-                    if os.path.exists(each_img_path):
-                        os.remove(each_img_path)
+                # if time.time() - start_time < max_use_time:
+                each_model_list = get_model_list_from_img_name("", assign_model_list)
+                each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
+                if os.path.exists(each_img_path):
+                    os.remove(each_img_path)
             except Exception as e:
                 print(e)
                 print(e.__traceback__.tb_frame.f_globals["__file__"])
@@ -827,6 +820,7 @@ if __name__ == '__main__':
                     os.rmdir(each_img_dir)
         #
         time.sleep(2)
+
     #
     #dete_log.close()
 
