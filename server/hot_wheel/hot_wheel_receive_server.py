@@ -43,13 +43,13 @@ def receive_img():
     global dete_img_num, img_dir, random_dir_name, batch_size
 
     # a batch img
-    if dete_img_num % batch_size == 0:
-        random_dir_name = str(uuid.uuid1())
+    if dete_img_num % batch_size == batch_size-1:
         random_dir_path = os.path.join(img_dir, random_dir_name)
         os.makedirs(random_dir_path, exist_ok=True)
-        # todo 在 sign 文件夹中记录需要检测数据 txt 中的一行记录
+        #
         with open(sign_txt_path, 'a+') as sign_txt_file:
             sign_txt_file.write(random_dir_name + '\n')
+        random_dir_name = str(uuid.uuid1())
 
     dete_img_num += 1
 

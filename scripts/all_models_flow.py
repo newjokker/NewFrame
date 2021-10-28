@@ -776,8 +776,8 @@ if __name__ == '__main__':
     print("* script_num-script_index : {0}-{1}".format(script_num, script_index))
     print('-'*50)
 
-    # json path file
-    # img_name_json_dict = get_json_dict(json_path)
+
+    dete_img_index = 0
 
     # model_list
     assign_model_list = args.modelList.strip().split(',')
@@ -805,6 +805,8 @@ if __name__ == '__main__':
         img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
         # dete
         for each_img_path in img_path_list:
+            dete_img_index += 1
+            print("* {0} : {1}".format(dete_img_index, each_img_path))
             try:
                 # over time continue
                 if time.time() - start_time < max_use_time:
@@ -820,9 +822,10 @@ if __name__ == '__main__':
             print('-'*50)
         # 当检测完一个文件夹之后，删除这个文件夹
         if each_img_dir is not None:
-            if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
-                os.remove(each_img_dir)
-
+            if os.path.exists(each_img_dir):
+                if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
+                    os.rmdir(each_img_dir)
+        #
         time.sleep(2)
     #
     #dete_log.close()
