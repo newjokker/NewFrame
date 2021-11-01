@@ -7,6 +7,7 @@ lib_path = os.path.join(this_dir, '..')
 sys.path.insert(0, lib_path)
 import argparse
 import cv2
+import shutil
 import json
 import torch
 import numpy as np
@@ -44,6 +45,9 @@ from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
 import judge_angle_fun
 #
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
+
+
+# fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
 
 
 # fixme 将读取图片全部改为传入矩阵的方式进行，
@@ -764,6 +768,8 @@ if __name__ == '__main__':
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
     sign_txt_path = os.path.join(sign_dir, "img_dir_to_dete.txt")
+    sign_error_dir = os.path.join(sign_dir, "dete_error_img")
+    os.makedirs(sign_error_dir, exist_ok=True)
     #
     script_num, script_index = args.scriptIndex.strip().split('-')
     script_num, script_index = int(script_num), int(script_index)
@@ -773,6 +779,7 @@ if __name__ == '__main__':
     print("* {0} : {1}".format("json_path", json_path))
     print("* {0} : {1}".format("log_path", log_path))
     print("* {0} : {1}".format("csv_path", csv_path))
+    print("* {0} : {1}".format("dete_eror_dir", sign_error_dir))
     print("* script_num-script_index : {0}-{1}".format(script_num, script_index))
     print('-'*50)
 
@@ -804,7 +811,15 @@ if __name__ == '__main__':
                 # over time continue
                 # if time.time() - start_time < max_use_time:
                 each_model_list = get_model_list_from_img_name("", assign_model_list)
-                each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
+                try:
+                    each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
+                except Exception as e:
+                    print(e)
+                    print(e.__traceback__.tb_frame.f_globals["__file__"])
+                    print(e.__traceback__.tb_lineno)
+                    # move error img to assign dir
+                    shutil.move(each_img_path, os.path.join(sign_error_dir, os.path.split(each_img_path)[1]))
+                #
                 if os.path.exists(each_img_path):
                     os.remove(each_img_path)
             except Exception as e:

@@ -27,8 +27,7 @@ app = Flask(__name__)
 
 class LogServer(object):
 
-    def __init__(self, img_dir, xml_dir, sign_dir, img_count=-1):
-        self.img_dir = img_dir
+    def __init__(self, xml_dir, sign_dir, img_count=-1):
         self.sign_dir = sign_dir
         self.xml_dir = xml_dir
         self.xml_dir_return = os.path.join(self.sign_dir, "returned_xml")            # 已经返回结果的 xml 路径
@@ -41,7 +40,6 @@ class LogServer(object):
         #
         self.buffer_xml_path_list = []      # 还未返回结果的图片 xml
 
-        print("img dir : {0}".format(self.img_dir))
         print("xml dir : {0}".format(self.xml_dir))
         print("sign dir : {0}".format(self.sign_dir))
 
@@ -133,7 +131,7 @@ def serv_start():
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
     parser.add_argument('--port', dest='port', type=int, default=3232)
-    parser.add_argument('--host', dest='host', type=str, default='192.168.3.155')   # 这边要是写 127 的话只能在本服务器访问了，要改为本机的地址
+    parser.add_argument('--host', dest='host', type=str, default='192.168.3.74')   # 这边要是写 127 的话只能在本服务器访问了，要改为本机的地址
     #
     parser.add_argument('--img_dir', dest='img_dir', type=str, default='/')
     parser.add_argument('--xml_dir', dest='xml_dir', type=str, default='/')
@@ -149,7 +147,7 @@ if __name__ == "__main__":
     portNum = args.port
     host = args.host
 
-    log_server = LogServer(args.img_dir, args.xml_dir, args.sign_dir, len(list(FileOperationUtil.re_all_file(args.img_dir, endswitch=['.jpg', '.JPG']))))
+    log_server = LogServer(args.xml_dir, args.sign_dir, 1000000)
 
     url = r"http://" + host + ":" +  str(portNum) + "/log_server"
 
