@@ -48,8 +48,6 @@ from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 
 
 # fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
-
-
 # fixme 将读取图片全部改为传入矩阵的方式进行，
 # fixme 使用 JoTools 函数
 
@@ -110,7 +108,6 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
                 return img_path_list, each_img_dir
     return [], None
 
-
 def screen(y, img):
     #screen brightness
     _, _, v = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
@@ -149,74 +146,60 @@ def get_model_list_from_img_name(img_name, M_list):
 
 def model_restore(args, scriptName, model_list=None):
     """模型预热"""
-    
+
+    threads = []
     model_dict = {}
     
     if model_list is None:
         model_list = ['nc' ,'jyzZB', 'fzc', 'fzcRust', 'ljcRust', 'fncDK', 'kkxTC', 'kkxQuiting', 'kkxRust', 'waipo', 'xjQX', 'jyhQX']
-    
-     
-    if "xjQX" in model_list:
-        #model_xjQX_1 = ljcR2cnnDetection(args, "ljjxj", scriptName)
-        #model_xjQX_1.model_restore()
-        model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
-        model_xjQX_1.model_restore()
 
+    if "xjQX" in model_list:
+        model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
+        threads.append(threading.Thread(target=model_xjQX_1.model_restore))
         #
         model_xjQX_2 = xjDeeplabDetection(args, "xj_deeplab", scriptName)
-        model_xjQX_2.model_restore()
+        threads.append(threading.Thread(target=model_xjQX_2.model_restore))
         model_dict["model_xjQX_1"] = model_xjQX_1
         model_dict["model_xjQX_2"] = model_xjQX_2
         
     if "jyzZB" in model_list:
         model_jyzZB_1 = YOLOV5Detection(args, "jyz", scriptName)
-        model_jyzZB_1.model_restore()
+        threads.append(threading.Thread(target=model_jyzZB_1.model_restore))
         model_jyzZB_2 = YOLOV5Detection(args, "jyzzb", scriptName)
-        model_jyzZB_2.model_restore()
+        threads.append(threading.Thread(target=model_jyzZB_2.model_restore))
         model_dict["model_jyzZB_1"] = model_jyzZB_1
         model_dict["model_jyzZB_2"] = model_jyzZB_2
-       
-    
+
     if "nc" in model_list:
         model_nc = YOLOV5Detection(args, "nc", scriptName)
-        model_nc.model_restore()
+        threads.append(threading.Thread(target=model_nc.model_restore))
         model_dict["model_nc"] = model_nc
 
     if "fzc" in model_list:
         model_fzc_1 = FasterDetectionPytorch(args,"fzc_step_one", scriptName)
-        model_fzc_1.model_restore()
+        threads.append(threading.Thread(target=model_fzc_1.model_restore))
         model_fzc_2 = VggClassify(args,"fzc_step_new", scriptName)
-        model_fzc_2.model_restore()
+        threads.append(threading.Thread(target=model_fzc_2.model_restore))
         model_dict["model_fzc_1"] = model_fzc_1
         model_dict["model_fzc_2"] = model_fzc_2
-        
-        
-    if "fzcRust" in model_list:
+        #
         model_fzc_rust = ClsDetectionPyTorch(args, "fzc_rust", scriptName)
-        model_fzc_rust.model_restore()
+        threads.append(threading.Thread(target=model_fzc_rust.model_restore))
         model_dict["model_fzc_rust"] = model_fzc_rust
-    
-    
-    if "fncDK" in model_list:
-        model_fnc = YOLOV5Detection(args, "fnc", scriptName)
-        model_fnc.model_restore()
-        model_dict["model_fnc"] = model_fnc
-        
-        
+
     if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
         model_kkxTC_1 = LjcDetection(args, "kkxTC_ljc", scriptName)
-        model_kkxTC_1.model_restore()
+        threads.append(threading.Thread(target=model_kkxTC_1.model_restore))
         model_kkxTC_2 = KkgDetection(args, "kkxTC_kkx", scriptName)
-        model_kkxTC_2.model_restore()
+        threads.append(threading.Thread(target=model_kkxTC_2.model_restore))
         # vit
-        #model_kkxTC_3 = ClsDetectionPyTorch(args, "kkxTC_lm_cls", scriptName)
         model_kkxTC_3 = ClsViTDetection(args, "kkxTC_lm_cls_vit", scriptName)
-        model_kkxTC_3.model_restore()
+        threads.append(threading.Thread(target=model_kkxTC_3.model_restore))
         # 
         model_kkxQuiting = ClsDetectionPyTorch(args, "kkxQuiting_cls", scriptName)
-        model_kkxQuiting.model_restore()
+        threads.append(threading.Thread(target=model_kkxQuiting.model_restore))
         model_kkxRust = VggClassify(args, "kkxRust", scriptName)
-        model_kkxRust.model_restore()
+        threads.append(threading.Thread(target=model_kkxRust.model_restore))
         model_dict["model_kkxTC_1"] = model_kkxTC_1
         model_dict["model_kkxTC_2"] = model_kkxTC_2
         model_dict["model_kkxTC_3"] = model_kkxTC_3
@@ -225,27 +208,25 @@ def model_restore(args, scriptName, model_list=None):
 
     if "waipo" in model_list:
         model_waipo = YOLOV5Detection(args, "waipo", scriptName)
-        model_waipo.model_restore()
+        threads.append(threading.Thread(target=model_waipo.model_restore))
         model_dict["model_waipo"] = model_waipo
-        
-    if "ljcRust" in model_list:
-        model_ljc_rust_1 = YOLOV5Detection(args, "ljc_rust_one", scriptName)
-        model_ljc_rust_1.model_restore()
-        model_ljc_rust_2 = ClsDetectionPyTorch(args, "ljc_rust_two", scriptName)    
-        model_ljc_rust_2.model_restore()
-        model_dict["model_ljc_rust_1"] = model_ljc_rust_1
-        model_dict["model_ljc_rust_2"] = model_ljc_rust_2
 
     if "jyhQX" in model_list:
         model_jyhQX_1 = YOLOV5Detection(args, "jyhqx_one", scriptName)
-        model_jyhQX_1.model_restore()
+        threads.append(threading.Thread(target=model_jyhQX_1.model_restore))
         model_jyhQX_2 = R2cnnDetection(args, "jyhqx_two", scriptName)
-        model_jyhQX_2.model_restore()
+        threads.append(threading.Thread(target=model_jyhQX_2.model_restore))
         model_jyhQX_3 = jyhDeeplabDetection(args, "jyhqx_three", scriptName)
-        model_jyhQX_3.model_restore()
+        threads.append(threading.Thread(target=model_jyhQX_3.model_restore))
         model_dict["model_jyhqx_1"] = model_jyhQX_1
         model_dict["model_jyhqx_2"] = model_jyhQX_2
         model_dict["model_jyhqx_3"] = model_jyhQX_3
+
+    # 并行加载模型
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     return model_dict
 
@@ -756,11 +737,9 @@ def model_dete(img_path, model_dict, model_list=None):
     return dete_res_all
 
 
-
 if __name__ == '__main__':
 
     args = parse_args()
-
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
@@ -789,15 +768,20 @@ if __name__ == '__main__':
     # model_list
     assign_model_list = args.modelList.strip().split(',')
 
+    # -----------------------------------------------------------------------------------
     # warm up
     # todo 这边进行并行处理
     print("* start warm model ")
     scriptName = os.path.basename(__file__).split('.')[0]
+
     #
     all_model_list = ['nc' ,'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
 
     model_dict = model_restore(args, scriptName, all_model_list)
     print("* warm model success ")
+    # ----------------------------------------------------------------------------------
+
+
 
     start_time = time.time()
 
@@ -828,24 +812,13 @@ if __name__ == '__main__':
                 print(e.__traceback__.tb_lineno)
             #
             print('-'*50)
-        # 当检测完一个文件夹之后，删除这个文件夹
+
+        # when dete finished , delete the img dir
         if each_img_dir is not None:
             if os.path.exists(each_img_dir):
                 if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
                     os.rmdir(each_img_dir)
         #
         time.sleep(2)
-
-    #
-    #dete_log.close()
-
-    # end_time = time.time()
-    # # add file to output_dir
-    # res_txt = os.path.join(output_dir, "res_txt")
-    # os.makedirs(res_txt, exist_ok=True)
-    # txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
-    # with open(txt_path, 'w') as txt_file:
-    #     txt_file.write('done')
-    # print("* check img {0} use time {1}".format(len(img_path_list), end_time - start_time))
 
 
