@@ -47,10 +47,10 @@ from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
 import judge_angle_fun
 #
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
-
+# time analysis
+from JoTools.utils.DecoratorUtil import DecoratorUtil
 
 # fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
-# fixme 将读取图片全部改为传入矩阵的方式进行，
 
 
 def parse_args():
@@ -74,7 +74,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
 def get_json_dict(json_path):
     img_name_json_dict = {}
     #
@@ -82,7 +81,6 @@ def get_json_dict(json_path):
     for each in name_info:
         img_name_json_dict[each["fileName"]] = each["originFileName"]
     return img_name_json_dict
-
 
 def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
     """从 sign_dir 中读取需要处理的文件"""
@@ -111,7 +109,6 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
                 return img_path_list, each_img_dir
     return [], None
 
-
 def screen(y, img):
     # screen brightness
     _, _, v = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
@@ -123,7 +120,6 @@ def screen(y, img):
     if blurry < 200:
         y = '0'
     return y
-
 
 def get_model_list_from_img_name(img_name, M_list):
     """从文件名中获取 model_list，传入的是文件名不是完整的路径"""
@@ -149,6 +145,7 @@ def get_model_list_from_img_name(img_name, M_list):
     else:
         return model_set
 
+@DecoratorUtil.time_this
 def model_restore(args, scriptName, model_list=None):
     """模型预热"""
 
@@ -247,6 +244,7 @@ def model_restore(args, scriptName, model_list=None):
 
     return model_dict
 
+@DecoratorUtil.time_this
 def dete_nc(model_dict, data):
     try:
         model_nc = model_dict["model_nc"]
@@ -258,6 +256,7 @@ def dete_nc(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def dete_jyzZB(model_dict, data):
 
     try:
@@ -272,7 +271,7 @@ def dete_jyzZB(model_dict, data):
         result_res = DeteRes(assign_img_path=data['path'])
         result_res.img_path = data['path']
         #
-        result_res.file_name = name
+        result_res.file_name = data['name']
         for each_dete_obj in dete_res_jyzZB:
             each_dete_obj.do_augment([150, 150, 150, 150], dete_res_jyzZB.width, dete_res_jyzZB.height,
                                      is_relative=False)
@@ -293,15 +292,21 @@ def dete_jyzZB(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def dete_fzc(model_dict, data):
+
     try:
+        model_fzc_1 = model_dict["model_fzc_1"]
+        model_fzc_2 = model_dict["model_fzc_2"]
+        model_fzc_rust = model_dict["model_fzc_rust"]
+
         fzc_dete_res = DeteRes()
         # step_1
         dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
         # step_2
         for each_dete_obj in dete_res_fzc:
             crop_array = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
-            new_label, conf = model_fzc_2.detect_new(crop_array, name)
+            new_label, conf = model_fzc_2.detect_new(crop_array, data['name'])
             #
             each_dete_obj.tag = new_label
             each_dete_obj.conf = conf
@@ -341,6 +346,7 @@ def dete_fzc(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def dete_kkx(model_dict, data):
 
     try:
@@ -350,10 +356,10 @@ def dete_kkx(model_dict, data):
         model_kkxQuiting = model_dict["model_kkxQuiting"]
 
         # kkxTC_1
-        kkxTC_1_out = model_kkxTC_1.detect(im, name)
+        kkxTC_1_out = model_kkxTC_1.detect(data['im'], data['name'])
         if len(kkxTC_1_out[0]) > 0:
             voc_labels = model_kkxTC_1.post_process(*kkxTC_1_out)
-            kkxTC_1_results = model_kkxTC_1.postProcess2(im, *kkxTC_1_out)
+            kkxTC_1_results = model_kkxTC_1.postProcess2(data['im'], *kkxTC_1_out)
         else:
             kkxTC_1_results = []
             #
@@ -361,7 +367,7 @@ def dete_kkx(model_dict, data):
         kkxTC_1_dete_res.img_path = data['path']
         for i, each_res in enumerate(kkxTC_1_results):
             label, score, [xmin, ymin, xmax, ymax] = each_res
-            ljc_resizedName = name + '_' + label + '_' + str(i) + '.jpg'
+            ljc_resizedName = data['name'] + '_' + label + '_' + str(i) + '.jpg'
             # add up_right obj
             kkxTC_1_dete_res.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i,
                                      describe=ljc_resizedName)
@@ -383,7 +389,7 @@ def dete_kkx(model_dict, data):
             # each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj,RGB=True)
             each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_from_crop(each_dete_obj, RGB=False)
             # 小金具定位检测结果集合 on a ljc martrix-cap
-            kkxTC_2_out = model_kkxTC_2.detect(each_sub_array, name)
+            kkxTC_2_out = model_kkxTC_2.detect(each_sub_array, data['name'])
             if len(kkxTC_2_out[0]) > 0:
                 voc_labels = model_kkxTC_2.post_process(*kkxTC_2_out)
                 ## 过滤最小尺寸 ##
@@ -465,15 +471,13 @@ def dete_kkx(model_dict, data):
             #         kkxRust_dete_res.add_obj_2(new_dete_obj_rust)
             # -----------------
             # kkxQuiting
-            if "model_kkxQuiting" in model_dict:
-                if "kkxQuiting" in model_list:
-                    # 0:销脚可见 1:退出 2:销头销脚正对
-                    if each_dete_obj.tag in ["Xnormal"]:
-                        label, prob = model_kkxQuiting.detect(each_im, 'resizedName')
-                        if label == '1' and prob > 0.5:
-                            new_dete_obj = each_dete_obj.deep_copy()
-                            new_dete_obj.tag = 'kkxTC'
-                            kkxTC_dete_res.add_obj_2(new_dete_obj)
+            # 0:销脚可见 1:退出 2:销头销脚正对
+            if each_dete_obj.tag in ["Xnormal"]:
+                label, prob = model_kkxQuiting.detect(each_im, 'resizedName')
+                if label == '1' and prob > 0.5:
+                    new_dete_obj = each_dete_obj.deep_copy()
+                    new_dete_obj.tag = 'kkxTC'
+                    kkxTC_dete_res.add_obj_2(new_dete_obj)
 
         # torch.cuda.empty_cache()
         return kkxTC_1_dete_res
@@ -482,6 +486,7 @@ def dete_kkx(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def dete_jyhQX(model_dict, data):
 
     try:
@@ -585,6 +590,7 @@ def dete_jyhQX(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def dete_xjQX(model_dict, data):
     try:
         model_xjQX_1 = model_dict["model_xjQX_1"]
@@ -612,6 +618,7 @@ def dete_xjQX(model_dict, data):
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
 
+@DecoratorUtil.time_this
 def model_dete(img_path, model_dict, model_list):
     """进行模型检测"""
 
@@ -720,7 +727,7 @@ if __name__ == '__main__':
     # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
     all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
 
-    model_dict = model_restore(args, scriptName, all_model_list)
+    all_model_dict = model_restore(args, scriptName, all_model_list)
     print("* warm model success ")
 
     start_time = time.time()
@@ -735,7 +742,7 @@ if __name__ == '__main__':
                 # each_model_list = get_model_list_from_img_name("", assign_model_list)
                 each_model_list = all_model_list
                 try:
-                    each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
+                    each_dete_res = model_dete(each_img_path, all_model_dict, each_model_list)
                 except Exception as e:
                     print(e)
                     print(e.__traceback__.tb_frame.f_globals["__file__"])
