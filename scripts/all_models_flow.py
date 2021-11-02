@@ -16,6 +16,7 @@ import threading
 from PIL import Image
 import uuid
 import time
+import copy
 from lib.detect_libs.yolov5Detection import YOLOV5Detection
 from lib.detect_utils.timer import Timer
 from lib.detect_libs.fasterDetectionPyTorch import FasterDetectionPytorch
@@ -49,10 +50,7 @@ from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 
 
 # fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
-
-
 # fixme 将读取图片全部改为传入矩阵的方式进行，
-# fixme 使用 JoTools 函数
 
 
 def parse_args():
@@ -150,7 +148,6 @@ def get_model_list_from_img_name(img_name, M_list):
         return all_model_set
     else:
         return model_set
-
 
 def model_restore(args, scriptName, model_list=None):
     """模型预热"""
@@ -250,483 +247,411 @@ def model_restore(args, scriptName, model_list=None):
 
     return model_dict
 
+def dete_nc(model_dict, data):
+    try:
+        model_nc = model_dict["model_nc"]
+        nc_dete_res = model_nc.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
+        # torch.cuda.empty_cache()
+        return nc_dete_res
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
 
-def model_dete(img_path, model_dict, model_list=None):
+def dete_jyzZB(model_dict, data):
+
+    try:
+        model_jyzZB_1 = model_dict["model_jyzZB_1"]
+        model_jyzZB_2 = model_dict["model_jyzZB_2"]
+
+        # jyzZB step_1
+        dete_res_jyzZB = model_jyzZB_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
+        # torch.cuda.empty_cache()
+        # ---------------------------------------
+        # jyzZB step_2
+        result_res = DeteRes(assign_img_path=data['path'])
+        result_res.img_path = data['path']
+        #
+        result_res.file_name = name
+        for each_dete_obj in dete_res_jyzZB:
+            each_dete_obj.do_augment([150, 150, 150, 150], dete_res_jyzZB.width, dete_res_jyzZB.height,
+                                     is_relative=False)
+            each_im = dete_res_jyzZB.get_sub_img_by_dete_obj(each_dete_obj)
+            new_dete_res = model_jyzZB_2.detectSOUT(image=each_im, image_name=each_dete_obj.get_name_str())
+            new_dete_res.offset(each_dete_obj.x1, each_dete_obj.y1)
+            result_res += new_dete_res
+
+        # new logic
+        result_res.filter_tag1_by_tag2_with_nms(['jyzSingle'], ['jyzhead'], 0.5)
+
+        result_res.do_nms_center_point(ignore_tag=True)
+        result_res.update_tags({"jyzSingle": "jyzzb"})
+        # torch.cuda.empty_cache()
+        return result_res
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+
+def dete_fzc(model_dict, data):
+    try:
+        fzc_dete_res = DeteRes()
+        # step_1
+        dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
+        # step_2
+        for each_dete_obj in dete_res_fzc:
+            crop_array = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
+            new_label, conf = model_fzc_2.detect_new(crop_array, name)
+            #
+            each_dete_obj.tag = new_label
+            each_dete_obj.conf = conf
+
+            #
+            if each_dete_obj.tag == "fzc_broken":
+                if each_dete_obj.conf > 0.9:
+                    each_dete_obj.tag = "fzc_broken"
+                else:
+                    each_dete_obj.tag = "other_fzc_broken"
+            elif each_dete_obj.tag == "other":
+                each_dete_obj.tag = "other_other"
+            else:
+                if each_dete_obj.conf > 0.6:
+                    each_dete_obj.tag = "Fnormal"
+                else:
+                    each_dete_obj.tag = "other_Fnormal"
+            #
+            fzc_dete_res.add_obj_2(each_dete_obj)
+
+            if "model_fzc_rust" in model_dict:
+                # rust
+                if new_label in ["yt", "zd_yt"]:
+                    crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
+                    rust_index, rust_f = model_fzc_rust.detect(crop_array_rust)
+                    rust_label = ["fzc_normal", "fzc_rust"][int(rust_index)]
+                    rust_f = float(rust_f)
+                    #
+                    each_dete_rust = each_dete_obj.deep_copy()
+                    each_dete_rust.tag = rust_label
+                    #
+                    fzc_dete_res.add_obj_2(each_dete_rust)
+        # torch.cuda.empty_cache()
+        return fzc_dete_res
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+
+def dete_kkx(model_dict, data):
+
+    try:
+        model_kkxTC_1 = model_dict["model_kkxTC_1"]
+        model_kkxTC_2 = model_dict["model_kkxTC_2"]
+        model_kkxTC_3 = model_dict["model_kkxTC_3"]
+        model_kkxQuiting = model_dict["model_kkxQuiting"]
+
+        # kkxTC_1
+        kkxTC_1_out = model_kkxTC_1.detect(im, name)
+        if len(kkxTC_1_out[0]) > 0:
+            voc_labels = model_kkxTC_1.post_process(*kkxTC_1_out)
+            kkxTC_1_results = model_kkxTC_1.postProcess2(im, *kkxTC_1_out)
+        else:
+            kkxTC_1_results = []
+            #
+        kkxTC_1_dete_res = DeteRes()
+        kkxTC_1_dete_res.img_path = data['path']
+        for i, each_res in enumerate(kkxTC_1_results):
+            label, score, [xmin, ymin, xmax, ymax] = each_res
+            ljc_resizedName = name + '_' + label + '_' + str(i) + '.jpg'
+            # add up_right obj
+            kkxTC_1_dete_res.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i,
+                                     describe=ljc_resizedName)
+        #
+        kkxTC_1_dete_res.do_nms(0.3)
+        kkxTC_1_save_dir = model_kkxTC_1.resizedImgPath
+        kkxTC_1_dete_res.crop_dete_obj(kkxTC_1_save_dir)
+        # ---------------------------------------
+        # kkxTC_2
+        ###  单连接件 ###
+        kkxTC_2_dete_kg_lm = kkxTC_1_dete_res.deep_copy(copy_img=False)
+        kkxTC_2_dete_kg_lm.reset_alarms([])
+
+        # 遍历每一个连接件正框
+        for each_dete_obj in kkxTC_1_dete_res.alarms:
+            each_dete_kg_lm = kkxTC_1_dete_res.deep_copy(copy_img=False)
+            each_dete_kg_lm.reset_alarms([])
+            # get array 连接件正框图片矩阵 np.array
+            # each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj,RGB=True)
+            each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_from_crop(each_dete_obj, RGB=False)
+            # 小金具定位检测结果集合 on a ljc martrix-cap
+            kkxTC_2_out = model_kkxTC_2.detect(each_sub_array, name)
+            if len(kkxTC_2_out[0]) > 0:
+                voc_labels = model_kkxTC_2.post_process(*kkxTC_2_out)
+                ## 过滤最小尺寸 ##
+                voc_labels = model_kkxTC_2.checkDetectBoxAreas(voc_labels)
+
+                for each_obj in voc_labels:
+                    ## label, i, xmin, ymin, xmax, ymax,p
+                    new_dete_obj = DeteObj(each_obj[2], each_obj[3], each_obj[4], each_obj[5], tag=each_obj[0],
+                                           conf=float(each_obj[6]), assign_id=each_dete_obj.id)
+                    each_dete_kg_lm.add_obj_2(new_dete_obj)
+
+                ## +xmap +ymap 坐标还原至原图
+                each_dete_kg_lm.offset(each_dete_obj.x1, each_dete_obj.y1)
+                # merge
+                kkxTC_2_dete_kg_lm += each_dete_kg_lm
+
+        # 业务逻辑：other* 和 dense内的K过滤
+        kkxTC_2_dete_res = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
+        only_other_3 = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
+        only_k = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
+        only_other_3.filter_by_tags(need_tag=model_kkxTC_2.labeles_checkedOut)
+        only_k.filter_by_tags(need_tag=['K'])
+        kkxTC_2_dete_res.filter_by_tags(remove_tag=['K'])
+        #
+        for each_dete_obj in only_k:
+            is_in = False
+            for each_dete_obj_2 in only_other_3:
+                each_iou = ResTools.polygon_iou_1(each_dete_obj.get_points(), each_dete_obj_2.get_points())  ##
+                # print('--other* iou-->{} ,other*:{}, K: {}'.format(each_iou,each_dete_obj_2.get_points(),each_dete_obj.get_points()))
+                if each_iou > 0.8:
+                    is_in = True
+            if not is_in:
+                kkxTC_2_dete_res.add_obj_2(each_dete_obj)
+        #
+        kkxTC_2_dete_res.do_nms(0.3)
+        # 删除裁剪的小图
+        kkxTC_1_dete_res.del_sub_img_from_crop()
+
+        # ---------------------------------------
+
+        # kkxTC_3 | kkxQuiting | kkxRust
+        kkxTC_dete_res = DeteRes()
+        # kkxQuiting_dete_res = DeteRes()
+        # kkxRust_dete_res = DeteRes()
+        #
+        for each_dete_obj in kkxTC_2_dete_res:
+            if each_dete_obj.tag not in ['K', 'KG', 'Lm', 'K2', 'KG2']:
+                continue
+            #
+            each_im = kkxTC_2_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
+            # -----------------
+            # kkxTC
+            label, prob = model_kkxTC_3.detect(each_im, 'resizedName')
+            label = str(label)
+            each_dete_obj.conf = float(prob)
+            each_dete_obj.des = each_dete_obj.tag
+
+            if label == '2' or each_dete_obj.tag == 'Lm':
+                each_dete_obj.tag = 'Lm'
+
+            elif label == '1' and prob > model_kkxTC_3.confThresh:
+                each_dete_obj.tag = 'K'
+            else:
+                each_dete_obj.tag = 'Xnormal'
+            kkxTC_dete_res.add_obj_2(each_dete_obj)
+            # -----------------
+            # # kkxRust
+            # if "model_kkxRust" in model_dict:
+            #     if "kkxRust" in model_list:
+            #         new_label, conf = model_kkxRust.detect_new(each_im, name)
+            #         new_dete_obj_rust = each_dete_obj.deep_copy()
+            #         if new_label == 'kkx_rust' and conf > 0.8:
+            #             if each_dete_obj.tag in ["Lm"]:
+            #                 new_dete_obj_rust.tag = 'Lm_rust'
+            #             else:
+            #                 new_dete_obj_rust.tag = 'K_KG_rust'
+            #         else:
+            #             new_dete_obj_rust.tag = 'Lnormal'
+            #         kkxRust_dete_res.add_obj_2(new_dete_obj_rust)
+            # -----------------
+            # kkxQuiting
+            if "model_kkxQuiting" in model_dict:
+                if "kkxQuiting" in model_list:
+                    # 0:销脚可见 1:退出 2:销头销脚正对
+                    if each_dete_obj.tag in ["Xnormal"]:
+                        label, prob = model_kkxQuiting.detect(each_im, 'resizedName')
+                        if label == '1' and prob > 0.5:
+                            new_dete_obj = each_dete_obj.deep_copy()
+                            new_dete_obj.tag = 'kkxTC'
+                            kkxTC_dete_res.add_obj_2(new_dete_obj)
+
+        # torch.cuda.empty_cache()
+        return kkxTC_1_dete_res
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+
+def dete_jyhQX(model_dict, data):
+
+    try:
+
+        model_jyhqx_1 = model_dict["model_jyhqx_1"]
+        model_jyhqx_2 = model_dict["model_jyhqx_2"]
+        model_jyhqx_3 = model_dict["model_jyhqx_3"]
+
+        # ----------------------------------------------------------------------------------------------------------
+        # dete res
+        jyhqx_1_dete_res = model_jyhqx_1.detectSOUT(path=data['path'], image=data['im'], image_name=data['name'])
+        jyhqx_1_dete_res.img_path = data['path']
+        #
+
+        jyhqx_1_dete_res.filter_by_tags(["fhjyz", "upring", "downring"])
+
+        # 将 fhjyz 按照一定的规则进行扩展
+        for each_obj in jyhqx_1_dete_res:
+            if each_obj.tag == "fhjyz":
+                each_obj.do_augment([50, 50, 50, 50], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height, is_relative=False)
+
+        # 剔除那些均压环和绝缘子无交集的部分
+        dete_res_jyz = jyhqx_1_dete_res.deep_copy(copy_img=False)
+        dete_res_jyz.filter_by_tags(["fhjyz"])
+        #
+        dete_res_jyh = jyhqx_1_dete_res.deep_copy(copy_img=False)
+        dete_res_jyh.filter_by_tags(["upring", "downring"])
+
+        # 判断绝缘子和均压环之间的交集
+        for each_jyh in dete_res_jyh:
+            each_dete_res_jyz = dete_res_jyz.deep_copy(copy_img=False)
+            each_dete_res_jyz.filter_by_mask(each_jyh.get_points(), need_in=True, cover_index_th=0.0001)
+            #
+            if len(each_dete_res_jyz) < 2:
+                jyhqx_1_dete_res.del_dete_obj(each_jyh)
+
+        # 去除其中的绝缘子
+        jyhqx_1_dete_res.filter_by_tags(["upring", "downring"])
+
+        for each_obj in jyhqx_1_dete_res:
+            if each_obj.tag == "downring":
+                each_obj.do_augment([0, 0, 1, 0], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height, is_relative=True)
+            elif each_obj.tag == "upring":
+                each_obj.do_augment([0, 0, 0, 1], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height, is_relative=True)
+
+        # ----------------------------------------------------------------------------------------------------------
+
+        for each_dete_obj in jyhqx_1_dete_res:
+            each_im = jyhqx_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
+            a = model_jyhqx_2.detect(each_im, name)
+            #
+            if len(a) < 1:
+                # dete_res.del_dete_obj(each_dete_obj)
+                # 在最后一步根据 des 进行过滤就行了，不用在这边删除
+                pass
+            else:
+                point_0, point_1, point_2, point_3, _ = a[0]
+                x1, y1 = int((point_0[0] + point_1[0]) / 2), int((point_0[1] + point_1[1]) / 2)
+                x2, y2 = int((point_2[0] + point_3[0]) / 2), int((point_2[1] + point_3[1]) / 2)
+                #
+                each_dete_obj.des = "[{0},{1},{2},{3}]".format(x1, y1, x2, y2)
+        # ----------------------------------------------------------------------------------------------------------
+
+        # itoration
+        for each_dete_obj in jyhqx_1_dete_res:
+            # do filter
+            if each_dete_obj.tag not in ['upring', 'downring'] or each_dete_obj.des in [None, "", " "]:
+                continue
+            # do dete
+            im = jyhqx_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
+            # print(dete_res_3.width,dete_res_3.height)
+            x_add, y_add = each_dete_obj.x1, each_dete_obj.y1
+            seg_image = model_jyhqx_3.detect(im, 'resizedName')
+            result = model_jyhqx_3.postProcess(seg_image, 'resizedName')
+
+            # fixme 看一下这一步是不是需要
+            if not result:
+                continue
+
+            # get_angle_1
+            angle_deep_lab = result['angle']
+            line_jyh = [result['xVstart'], result['yVstart'], result['xHend'], result['yHend']]
+            line_jyz_1 = [result['xVstart'], result['yVstart'], result['xVend'], result['yVend']]
+            # get_angle_2
+            des = each_dete_obj.des
+            line_jyz_2 = eval(des)
+            angle_r2cnn = judge_angle_fun.angle_r2cnn(x_add, y_add, each_dete_obj, result, des)
+            # judge Hnormal or fail
+            Hnormal_or_fail, line_index, use_angle = judge_angle_fun.Judge_Hnormal_fail(angle_deep_lab, angle_r2cnn)
+            each_dete_obj.tag = Hnormal_or_fail
+            # get lines to draw
+            lines_to_draw = judge_angle_fun.get_lines_to_draw(line_jyh, line_jyz_1, line_jyz_2, line_index, x_add, y_add, use_angle)
+            each_dete_obj.des = str(lines_to_draw)
+        # torch.cuda.empty_cache()
+        return jyhqx_1_dete_res
+
+        # ----------------------------------------------------------------------------------------------------------
+    except Exception as e:
+        print("error")
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+
+def dete_xjQX(model_dict, data):
+    try:
+        model_xjQX_1 = model_dict["model_xjQX_1"]
+        model_xjQX_2 = model_dict["model_xjQX_2"]
+        #
+        xjQX_dete_res = DeteRes()
+        detectBoxes = model_xjQX_1.detect(data['im'], data['name'])
+        results = model_xjQX_1.postProcess2(data['im'], data['name'], detectBoxes)
+        #
+        for xjBox in results:
+            resizedName = xjBox['resizedName']
+            resizedImg = im[xjBox['ymin']:xjBox['ymax'], xjBox['xmin']:xjBox['xmax']]
+            segImage = model_xjQX_2.detect(resizedImg, resizedName)
+            result = model_xjQX_2.postProcess(segImage, resizedName, xjBox)
+            # add obj
+            if "position" in result:
+                x1, y1, w, h = result["position"]
+                x2, y2 = x1 + w, y1 + h
+                tag = result["class"]
+                xjQX_dete_res.add_obj(x1, y1, x2, y2, tag, conf=-1, assign_id=-1, describe='')
+        # torch.cuda.empty_cache()
+        return xjQX_dete_res
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+
+def model_dete(img_path, model_dict, model_list):
     """进行模型检测"""
 
     name = os.path.split(img_path)[1]
 
-    if model_list is None:
-        model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'ljcRust', 'fncDK', 'kkxTC', 'kkxQuiting', 'kkxRust', 'waipo',
-                      'xjQX', 'jyhQX']
-
     # im
-    data = {"path": img_path}
-    im = np.array(Image.open(data['path']))
-
-    # dete result for all
+    im = np.array(Image.open(img_path))
+    data = {"path": img_path, 'name': name, 'im':im}
     dete_res_all = DeteRes()
     dete_res_all.img_path = img_path
 
     if "jyzZB" in model_list:
-
-        if ("model_jyzZB_1" not in model_dict):
-            print("* error : no model : model_jyzZB_1")
-
-        if ("model_jyzZB_2" not in model_dict):
-            print("* error : no model : model_jyzZB_2")
-
-        try:
-            model_jyzZB_1 = model_dict["model_jyzZB_1"]
-            model_jyzZB_2 = model_dict["model_jyzZB_2"]
-
-            # jyzZB step_1
-            dete_res_jyzZB = model_jyzZB_1.detectSOUT(path=data['path'], image_name=name)
-            # torch.cuda.empty_cache()
-            # ---------------------------------------
-            # jyzZB step_2
-            result_res = DeteRes(assign_img_path=data['path'])
-            result_res.img_path = data['path']
-            #
-            result_res.file_name = name
-            for each_dete_obj in dete_res_jyzZB:
-                each_dete_obj.do_augment([150, 150, 150, 150], dete_res_jyzZB.width, dete_res_jyzZB.height,
-                                         is_relative=False)
-                each_im = dete_res_jyzZB.get_sub_img_by_dete_obj(each_dete_obj)
-                new_dete_res = model_jyzZB_2.detectSOUT(image=each_im, image_name=each_dete_obj.get_name_str())
-                new_dete_res.offset(each_dete_obj.x1, each_dete_obj.y1)
-                result_res += new_dete_res
-
-            # new logic
-            result_res.filter_tag1_by_tag2_with_nms(['jyzSingle'], ['jyzhead'], 0.5)
-
-            # MYLOG.info(result_res.get_fzc_format())
-            result_res.do_nms_center_point(ignore_tag=True)
-            result_res.update_tags({"jyzSingle": "jyzzb"})
-            dete_res_all += result_res
-            # torch.cuda.empty_cache()
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
+        jyzZB_dete_res = dete_jyzZB(model_dict, data)
+        if jyzZB_dete_res:
+            dete_res_all += jyzZB_dete_res
 
     if "nc" in model_list:
-
-        if ("model_nc" not in model_dict):
-            print("* error : no model : model_nc")
-
-        try:
-
-            model_nc = model_dict["model_nc"]
-
-            nc_dete_res = model_nc.detectSOUT(path=data['path'], image_name=name)
+        nc_dete_res = dete_nc(model_dict, data)
+        if nc_dete_res:
             dete_res_all += nc_dete_res
-            # torch.cuda.empty_cache()
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
 
     if "fzc" in model_list:
-
-        if ("model_fzc_1" not in model_dict):
-            print("* error : no model : model_fzc_1")
-
-        if ("model_fzc_2" not in model_dict):
-            print("* error : no model : model_fzc_2")
-
-        if ("model_fzc_rust" not in model_dict):
-            # print("* error : no model : model_fzc_rust")
-            pass
-
-        try:
-
-            if "model_fzc_1" in model_dict or "model_fzc_2" in model_dict:
-                model_fzc_1 = model_dict["model_fzc_1"]
-                model_fzc_2 = model_dict["model_fzc_2"]
-
-            if "model_fzc_rust" in model_dict:
-                model_fzc_rust = model_dict["model_fzc_rust"]
-
-            # step_1
-            dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image_name=name)
-            # step_2
-            for each_dete_obj in dete_res_fzc:
-                crop_array = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False,
-                                                                  augment_parameter=[0.1, 0.1, 0.1, 0.1])
-                new_label, conf = model_fzc_2.detect_new(crop_array, name)
-                #
-                each_dete_obj.tag = new_label
-                each_dete_obj.conf = conf
-
-                # for rust
-                # if each_dete_obj.tag in ['', '', '']:
-
-                #
-                if each_dete_obj.tag == "fzc_broken":
-                    if each_dete_obj.conf > 0.9:
-                        each_dete_obj.tag = "fzc_broken"
-                    else:
-                        each_dete_obj.tag = "other_fzc_broken"
-                elif each_dete_obj.tag == "other":
-                    each_dete_obj.tag = "other_other"
-                else:
-                    if each_dete_obj.conf > 0.6:
-                        each_dete_obj.tag = "Fnormal"
-                    else:
-                        each_dete_obj.tag = "other_Fnormal"
-                #
-                dete_res_all.add_obj_2(each_dete_obj)
-
-                if "model_fzc_rust" in model_dict:
-                    # rust
-                    if new_label in ["yt", "zd_yt"]:
-                        crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
-                        rust_index, rust_f = model_fzc_rust.detect(crop_array_rust)
-                        rust_label = ["fzc_normal", "fzc_rust"][int(rust_index)]
-                        rust_f = float(rust_f)
-                        #
-                        each_dete_rust = each_dete_obj.deep_copy()
-                        each_dete_rust.tag = rust_label
-                        #
-                        dete_res_all.add_obj_2(each_dete_rust)
-            # torch.cuda.empty_cache()
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
+        fzc_dete_res = dete_fzc(model_dict, data)
+        if fzc_dete_res:
+            dete_res_all += fzc_dete_res
 
     if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
-
-        if ("model_kkxTC_1" not in model_dict):
-            print("* error : no model : model_kkxTC_1")
-
-        if ("model_kkxTC_2" not in model_dict):
-            print("* error : no model : model_kkxTC_2")
-
-        if ("model_kkxTC_3" not in model_dict):
-            print("* error : no model : model_kkxTC_3")
-
-        if ("model_kkxRust" not in model_dict):
-            print("* error : no model : model_kkxRust")
-
-        if ("model_kkxQuiting" not in model_dict):
-            print("* error : no model : model_kkxQuiting")
-
-        try:
-
-            # if "model_kkxTC_1" in model_dict or "model_kkxTC_2" in model_dict or "model_kkxTC_3" in model_dict:
-            model_kkxTC_1 = model_dict["model_kkxTC_1"]
-            model_kkxTC_2 = model_dict["model_kkxTC_2"]
-            model_kkxTC_3 = model_dict["model_kkxTC_3"]
-
-            if "model_kkxRust" in model_dict:
-                model_kkxRust = model_dict["model_kkxRust"]
-
-            if "model_kkxQuiting" in model_dict:
-                model_kkxQuiting = model_dict["model_kkxQuiting"]
-
-            # kkxTC_1
-            kkxTC_1_out = model_kkxTC_1.detect(im, name)
-            if len(kkxTC_1_out[0]) > 0:
-                voc_labels = model_kkxTC_1.post_process(*kkxTC_1_out)
-                # MYLOG.info("detect result:", voc_labels)
-                kkxTC_1_results = model_kkxTC_1.postProcess2(im, *kkxTC_1_out)
-            else:
-                kkxTC_1_results = []
-                #
-            kkxTC_1_dete_res = DeteRes()
-            kkxTC_1_dete_res.img_path = data['path']
-            for i, each_res in enumerate(kkxTC_1_results):
-                label, score, [xmin, ymin, xmax, ymax] = each_res
-                ljc_resizedName = name + '_' + label + '_' + str(i) + '.jpg'
-                # add up_right obj
-                kkxTC_1_dete_res.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i,
-                                         describe=ljc_resizedName)
-            #
-            kkxTC_1_dete_res.do_nms(0.3)
-            kkxTC_1_save_dir = model_kkxTC_1.resizedImgPath
-            kkxTC_1_dete_res.crop_dete_obj(kkxTC_1_save_dir)
-            # ---------------------------------------
-            # kkxTC_2
-            ###  单连接件 ###
-            kkxTC_2_dete_kg_lm = kkxTC_1_dete_res.deep_copy(copy_img=False)
-            kkxTC_2_dete_kg_lm.reset_alarms([])
-
-            # 遍历每一个连接件正框
-            for each_dete_obj in kkxTC_1_dete_res.alarms:
-                each_dete_kg_lm = kkxTC_1_dete_res.deep_copy(copy_img=False)
-                each_dete_kg_lm.reset_alarms([])
-                # get array 连接件正框图片矩阵 np.array
-                # each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj,RGB=True)
-                each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_from_crop(each_dete_obj, RGB=False)
-                # 小金具定位检测结果集合 on a ljc martrix-cap
-                kkxTC_2_out = model_kkxTC_2.detect(each_sub_array, name)
-                if len(kkxTC_2_out[0]) > 0:
-                    voc_labels = model_kkxTC_2.post_process(*kkxTC_2_out)
-                    ## 过滤最小尺寸 ##
-                    voc_labels = model_kkxTC_2.checkDetectBoxAreas(voc_labels)
-
-                    for each_obj in voc_labels:
-                        ## label, i, xmin, ymin, xmax, ymax,p
-                        new_dete_obj = DeteObj(each_obj[2], each_obj[3], each_obj[4], each_obj[5], tag=each_obj[0],
-                                               conf=float(each_obj[6]), assign_id=each_dete_obj.id)
-                        each_dete_kg_lm.add_obj_2(new_dete_obj)
-
-                    ## +xmap +ymap 坐标还原至原图
-                    each_dete_kg_lm.offset(each_dete_obj.x1, each_dete_obj.y1)
-                    # merge
-                    kkxTC_2_dete_kg_lm += each_dete_kg_lm
-
-            # 业务逻辑：other* 和 dense内的K过滤
-            kkxTC_2_dete_res = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
-            only_other_3 = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
-            only_k = kkxTC_2_dete_kg_lm.deep_copy(copy_img=False)
-            only_other_3.filter_by_tags(need_tag=model_kkxTC_2.labeles_checkedOut)
-            only_k.filter_by_tags(need_tag=['K'])
-            kkxTC_2_dete_res.filter_by_tags(remove_tag=['K'])
-            #
-            for each_dete_obj in only_k:
-                is_in = False
-                for each_dete_obj_2 in only_other_3:
-                    each_iou = ResTools.polygon_iou_1(each_dete_obj.get_points(), each_dete_obj_2.get_points())  ##
-                    # print('--other* iou-->{} ,other*:{}, K: {}'.format(each_iou,each_dete_obj_2.get_points(),each_dete_obj.get_points()))
-                    if each_iou > 0.8:
-                        is_in = True
-                if not is_in:
-                    kkxTC_2_dete_res.add_obj_2(each_dete_obj)
-            #
-            kkxTC_2_dete_res.do_nms(0.3)
-            # 删除裁剪的小图
-            kkxTC_1_dete_res.del_sub_img_from_crop()
-
-            # ---------------------------------------
-
-            # kkxTC_3 | kkxQuiting | kkxRust
-            kkxTC_dete_res = DeteRes()
-            kkxQuiting_dete_res = DeteRes()
-            kkxRust_dete_res = DeteRes()
-            #
-            for each_dete_obj in kkxTC_2_dete_res:
-                if each_dete_obj.tag not in ['K', 'KG', 'Lm', 'K2', 'KG2']:
-                    continue
-                #
-                each_im = kkxTC_2_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
-                # -----------------
-                # kkxTC
-                # if "kkxTC" in model_list:
-
-                # print("* ", label, prob)
-
-                label, prob = model_kkxTC_3.detect(each_im, 'resizedName')
-                label = str(label)
-                each_dete_obj.conf = float(prob)
-                each_dete_obj.des = each_dete_obj.tag
-
-                # print("* ", label, prob, model_kkxTC_3.confThresh, type(label), type(each_dete_obj.tag))
-
-                if label == '2' or each_dete_obj.tag == 'Lm':
-                    each_dete_obj.tag = 'Lm'
-
-                elif label == '1' and prob > model_kkxTC_3.confThresh:
-                    each_dete_obj.tag = 'K'
-                else:
-                    each_dete_obj.tag = 'Xnormal'
-                kkxTC_dete_res.add_obj_2(each_dete_obj)
-                # -----------------
-                # kkxRust
-                if "model_kkxRust" in model_dict:
-                    if "kkxRust" in model_list:
-                        new_label, conf = model_kkxRust.detect_new(each_im, name)
-                        new_dete_obj_rust = each_dete_obj.deep_copy()
-                        if new_label == 'kkx_rust' and conf > 0.8:
-                            if each_dete_obj.tag in ["Lm"]:
-                                new_dete_obj_rust.tag = 'Lm_rust'
-                            else:
-                                new_dete_obj_rust.tag = 'K_KG_rust'
-                        else:
-                            new_dete_obj_rust.tag = 'Lnormal'
-                        kkxRust_dete_res.add_obj_2(new_dete_obj_rust)
-                # -----------------
-                # kkxQuiting
-                if "model_kkxQuiting" in model_dict:
-                    if "kkxQuiting" in model_list:
-                        # 0:销脚可见 1:退出 2:销头销脚正对
-                        if each_dete_obj.tag in ["Xnormal"]:
-                            label, prob = model_kkxQuiting.detect(each_im, 'resizedName')
-                            if label == '1' and prob > 0.5:
-                                new_dete_obj = each_dete_obj.deep_copy()
-                                new_dete_obj.tag = 'kkxTC'
-                                kkxQuiting_dete_res.add_obj_2(new_dete_obj)
-
-            if "kkxTC" in model_list:
-                dete_res_all += kkxTC_dete_res
-
-            if "kkxQuiting" in model_list:
-                dete_res_all += kkxQuiting_dete_res
-
-            if "kkxRust" in model_list:
-                dete_res_all += kkxRust_dete_res
-
-            # torch.cuda.empty_cache()
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
-
-    """
-
-    if "xjQX" in model_list:
-
-        if ("model_xjQX_1" not in model_dict):
-            print("* error : no model : model_xjQX_1")
-
-        if ("model_xjQX_2" not in model_dict):
-            print("* error : no model : model_xjQX_2")
-
-        try:
-
-            model_xjQX_1 = model_dict["model_xjQX_1"]
-            model_xjQX_2 = model_dict["model_xjQX_2"]
-
-            xjQX_dete_res = DeteRes()
-            #xjQX_dete_res.img_path = data['path']
-
-            detectBoxes = model_xjQX_1.detect(im, name)
-            results = model_xjQX_1.postProcess2(im, name, detectBoxes)
-
-            print('*'*50)
-            print(detectBoxes)
-            print(results)
-            print('*'*50)
-
-            # 
-            for xjBox in results:
-                resizedName = xjBox['resizedName']
-                resizedImg = im[xjBox['ymin']:xjBox['ymax'],xjBox['xmin']:xjBox['xmax']]
-                segImage = model_xjQX_2.detect(resizedImg,resizedName)
-                result = model_xjQX_2.postProcess(segImage,resizedName,xjBox)
-
-                # add obj
-                if "position" in result:
-                    x1, y1, w, h = result["position"]
-                    x2, y2 = x1 + w, y1 + h
-                    tag = result["class"]
-                    xjQX_dete_res.add_obj(x1, y1, x2, y2, tag, conf=-1, assign_id=-1, describe='')
-
-            dete_res_all += xjQX_dete_res
-            #torch.cuda.empty_cache()
-        except Exception as e:
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
-
-    """
+        kkx_dete_res = dete_kkx(model_dict, data)
+        if kkx_dete_res:
+            dete_res_all += kkx_dete_res
 
     if "jyhQX" in model_list:
+        jyhQX_dete_res = dete_jyhQX(model_dict, data)
+        if jyhQX_dete_res:
+            dete_res_all += jyhQX_dete_res
 
-        try:
-
-            model_jyhqx_1 = model_dict["model_jyhqx_1"]
-            model_jyhqx_2 = model_dict["model_jyhqx_2"]
-            model_jyhqx_3 = model_dict["model_jyhqx_3"]
-
-            # ----------------------------------------------------------------------------------------------------------
-            # dete res
-            jyhqx_1_dete_res = model_jyhqx_1.detectSOUT(path=data['path'], image_name=name)
-            jyhqx_1_dete_res.img_path = data['path']
-            #
-
-            jyhqx_1_dete_res.filter_by_tags(["fhjyz", "upring", "downring"])
-
-            # 将 fhjyz 按照一定的规则进行扩展
-            for each_obj in jyhqx_1_dete_res:
-                if each_obj.tag == "fhjyz":
-                    each_obj.do_augment([50, 50, 50, 50], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height,
-                                        is_relative=False)
-
-            # 剔除那些均压环和绝缘子无交集的部分
-            dete_res_jyz = jyhqx_1_dete_res.deep_copy(copy_img=False)
-            dete_res_jyz.filter_by_tags(["fhjyz"])
-            #
-            dete_res_jyh = jyhqx_1_dete_res.deep_copy(copy_img=False)
-            dete_res_jyh.filter_by_tags(["upring", "downring"])
-
-            # 判断绝缘子和均压环之间的交集
-            for each_jyh in dete_res_jyh:
-                each_dete_res_jyz = dete_res_jyz.deep_copy(copy_img=False)
-                each_dete_res_jyz.filter_by_mask(each_jyh.get_points(), need_in=True, cover_index_th=0.0001)
-                #
-                if len(each_dete_res_jyz) < 2:
-                    jyhqx_1_dete_res.del_dete_obj(each_jyh)
-
-            # 去除其中的绝缘子
-            jyhqx_1_dete_res.filter_by_tags(["upring", "downring"])
-
-            for each_obj in jyhqx_1_dete_res:
-                if each_obj.tag == "downring":
-                    each_obj.do_augment([0, 0, 1, 0], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height, is_relative=True)
-                elif each_obj.tag == "upring":
-                    each_obj.do_augment([0, 0, 0, 1], jyhqx_1_dete_res.width, jyhqx_1_dete_res.height, is_relative=True)
-
-            # ----------------------------------------------------------------------------------------------------------
-
-            for each_dete_obj in jyhqx_1_dete_res:
-                each_im = jyhqx_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
-                a = model_jyhqx_2.detect(each_im, name)
-                #
-                if len(a) < 1:
-                    # dete_res.del_dete_obj(each_dete_obj)
-                    # 在最后一步根据 des 进行过滤就行了，不用在这边删除
-                    pass
-                else:
-                    point_0, point_1, point_2, point_3, _ = a[0]
-                    x1, y1 = int((point_0[0] + point_1[0]) / 2), int((point_0[1] + point_1[1]) / 2)
-                    x2, y2 = int((point_2[0] + point_3[0]) / 2), int((point_2[1] + point_3[1]) / 2)
-                    #
-                    each_dete_obj.des = "[{0},{1},{2},{3}]".format(x1, y1, x2, y2)
-            # ----------------------------------------------------------------------------------------------------------
-
-            # itoration
-            for each_dete_obj in jyhqx_1_dete_res:
-                # do filter
-                if each_dete_obj.tag not in ['upring', 'downring'] or each_dete_obj.des in [None, "", " "]:
-                    continue
-                # do dete
-                im = jyhqx_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
-                # print(dete_res_3.width,dete_res_3.height)
-                x_add, y_add = each_dete_obj.x1, each_dete_obj.y1
-                seg_image = model_jyhqx_3.detect(im, 'resizedName')
-                result = model_jyhqx_3.postProcess(seg_image, 'resizedName')
-
-                # fixme 看一下这一步是不是需要
-                if not result:
-                    continue
-
-                # get_angle_1
-                angle_deep_lab = result['angle']
-                line_jyh = [result['xVstart'], result['yVstart'], result['xHend'], result['yHend']]
-                line_jyz_1 = [result['xVstart'], result['yVstart'], result['xVend'], result['yVend']]
-                # get_angle_2
-                des = each_dete_obj.des
-                line_jyz_2 = eval(des)
-                angle_r2cnn = judge_angle_fun.angle_r2cnn(x_add, y_add, each_dete_obj, result, des)
-                # judge Hnormal or fail
-                Hnormal_or_fail, line_index, use_angle = judge_angle_fun.Judge_Hnormal_fail(angle_deep_lab, angle_r2cnn)
-                each_dete_obj.tag = Hnormal_or_fail
-                # get lines to draw
-                lines_to_draw = judge_angle_fun.get_lines_to_draw(line_jyh, line_jyz_1, line_jyz_2, line_index, x_add,
-                                                                  y_add, use_angle)
-                each_dete_obj.des = str(lines_to_draw)
-
-            dete_res_all += jyhqx_1_dete_res
-
-            # ----------------------------------------------------------------------------------------------------------
-        except Exception as e:
-            print("error")
-            print(e)
-            print(e.__traceback__.tb_frame.f_globals["__file__"])
-            print(e.__traceback__.tb_lineno)
+    if "xjQX" in model_list:
+        xjQX_dete_res = dete_xjQX(model_dict, data)
+        if xjQX_dete_res:
+            dete_res_all += xjQX_dete_res
 
     # set confidence as 1 when confidence less then 0
     for each_dete_obj in dete_res_all:
@@ -761,7 +686,6 @@ def model_dete(img_path, model_dict, model_list=None):
 if __name__ == '__main__':
 
     args = parse_args()
-
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
@@ -793,7 +717,8 @@ if __name__ == '__main__':
     print("* start warm model ")
     scriptName = os.path.basename(__file__).split('.')[0]
     #
-    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
+    # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
+    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
 
     model_dict = model_restore(args, scriptName, all_model_list)
     print("* warm model success ")
@@ -807,9 +732,8 @@ if __name__ == '__main__':
             dete_img_index += 1
             print("* {0} : {1}".format(dete_img_index, each_img_path))
             try:
-                # over time continue
-                # if time.time() - start_time < max_use_time:
-                each_model_list = get_model_list_from_img_name("", assign_model_list)
+                # each_model_list = get_model_list_from_img_name("", assign_model_list)
+                each_model_list = all_model_list
                 try:
                     each_dete_res = model_dete(each_img_path, model_dict, each_model_list)
                 except Exception as e:
