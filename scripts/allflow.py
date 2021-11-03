@@ -10,6 +10,10 @@ from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
 from JoTools.utils.CsvUtil import CsvUtil
 
+
+# todo 有一定的概率只启动一个模型，杀掉进程重新启动一下就行，目前不清楚原因
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 img_dir = r"/usr/input_picture"
 res_dir = r"/usr/output_dir/save_res"
@@ -43,6 +47,7 @@ if __name__ == "__main__":
         each_pid = subprocess.Popen(each_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)
         print("pid : {0}".format(each_pid.pid))
         print(each_cmd_str)
+        time.sleep(1)
 
 
 
