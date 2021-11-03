@@ -20,6 +20,7 @@ res_dir = r"/usr/output_dir/save_res"
 log_path = r"/usr/output_dir/log"
 csv_path = r"/usr/output_dir/result.csv"
 res_txt_dir = r"/usr/output_dir/res_txt"
+dete_mode = 0
 # ----------------------------------------------------------------------------------------------------------------------
 obj_name = "_all_flow"
 time_str = str(time.time())[:10]
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     mul_process_num = args.mul_process_num
 
     for i in range(1, mul_process_num + 1):
-        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1}".format(mul_process_num, i)
+        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2}".format(mul_process_num, i, dete_mode)
         each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
         each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
         each_pid = subprocess.Popen(each_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)

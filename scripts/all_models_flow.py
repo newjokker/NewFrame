@@ -90,11 +90,11 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir, dete_mode):
             if os.path.exists(each_img_dir):
                 res_list = []
                 img_path_list = list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-                for each_img_index in range(script_index, len(img_path_list), script_num):
+                for each_img_index in range(script_index -1 , len(img_path_list), script_num):
                     res_list.append(img_path_list[each_img_index])
                 #
-                if len(img_path_list) != 0:
-                    return img_path_list, each_img_dir
+                if len(res_list) != 0:
+                    return res_list, each_img_dir
     else:
         raise ValueError("error : dete mode can only in [0, 1]")
     return [], None
