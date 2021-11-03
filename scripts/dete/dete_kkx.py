@@ -147,7 +147,7 @@ def dete_kkx(model_dict, data):
                     kkxTC_dete_res.add_obj_2(new_dete_obj)
 
         # torch.cuda.empty_cache()
-        return kkxTC_1_dete_res
+        return kkxTC_dete_res
     except Exception as e:
         print(e)
         print(e.__traceback__.tb_frame.f_globals["__file__"])

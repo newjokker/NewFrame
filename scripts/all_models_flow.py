@@ -200,8 +200,6 @@ def model_dete(img_path, model_dict, model_list):
 
 if __name__ == '__main__':
 
-    # todo 两种模式，一种是，处理每一个文件夹中的 n 分之一的数据，另一种是处理 n 分之一的文件夹中的所有数据
-
     # todo 将每一个模型支持 两种模式，temp，crop
 
     args = parse_args()
