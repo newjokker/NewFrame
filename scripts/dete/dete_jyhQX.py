@@ -8,9 +8,12 @@ from lib.JoTools.txkjRes.deteRes import DeteRes
 from lib.JoTools.txkjRes.deteObj import DeteObj
 from lib.JoTools.txkjRes.deteAngleObj import DeteAngleObj
 from lib.JoTools.utils.JsonUtil import JsonUtil
+import copy
+
 #
 from JoTools.utils.DecoratorUtil import DecoratorUtil
-
+# todo 这个函数到时候直接拷贝到这边，之前直接放在 script 文件夹中
+# import judge_angle_fun
 
 @DecoratorUtil.time_this
 def dete_jyhQX(model_dict, data):

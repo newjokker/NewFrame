@@ -7,4 +7,5 @@ from .dete_jyhQX import dete_jyhQX
 from .dete_xjQX import dete_xjQX
 from .dete_kkx import dete_kkx
 from .dete_jyzZB import dete_jyzZB
-
+#
+from .all_model_restore import all_model_restore

@@ -44,7 +44,6 @@ from lib.detect_libs.clsViTDetection import ClsViTDetection
 # jyhQX
 from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
 from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
-import judge_angle_fun
 #
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 # time analysis
@@ -53,7 +52,7 @@ from JoTools.utils.DecoratorUtil import DecoratorUtil
 
 
 @DecoratorUtil.time_this
-def model_restore(args, scriptName, model_list):
+def all_model_restore(args, scriptName, model_list):
     """模型预热"""
     model_dict = {}
 

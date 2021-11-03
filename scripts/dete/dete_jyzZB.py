@@ -10,6 +10,7 @@ from lib.JoTools.txkjRes.deteAngleObj import DeteAngleObj
 from lib.JoTools.utils.JsonUtil import JsonUtil
 #
 from JoTools.utils.DecoratorUtil import DecoratorUtil
+import copy
 
 
 @DecoratorUtil.time_this
