@@ -13,7 +13,7 @@ from JoTools.txkjRes.deteRes import DeteRes
 def post_img(each_img_path, is_end='False'):
     # global post_img_num
     # post_img_num += 1
-    url = r"http://192.168.3.74:1243/receive_server/post_img/{0}".format(is_end)
+    url = r"http://192.168.3.74:3232/receive_server/post_img/{0}".format(is_end)
     res = requests.post(url=url, data={'filename': os.path.split(each_img_path)[1]}, files={'image': open(each_img_path, 'rb')})
     # print("{0} : {1}".format(post_img_num, res.text.strip()))
 

@@ -27,12 +27,14 @@ def dete_jyzZB(model_dict, data):
         # jyzZB step_2
         result_res = DeteRes(assign_img_path=data['path'])
         result_res.img_path = data['path']
+        dete_res_jyzZB.img_ndarry = data['im']
         #
         result_res.file_name = data['name']
         for each_dete_obj in dete_res_jyzZB:
             each_dete_obj.do_augment([150, 150, 150, 150], dete_res_jyzZB.width, dete_res_jyzZB.height,
                                      is_relative=False)
-            each_im = dete_res_jyzZB.get_sub_img_by_dete_obj(each_dete_obj)
+            # each_im = dete_res_jyzZB.get_sub_img_by_dete_obj(each_dete_obj)
+            each_im = dete_res_jyzZB.get_sub_img_by_dete_obj_new(each_dete_obj)
             new_dete_res = model_jyzZB_2.detectSOUT(image=each_im, image_name=each_dete_obj.get_name_str())
             new_dete_res.offset(each_dete_obj.x1, each_dete_obj.y1)
             result_res += new_dete_res

@@ -25,8 +25,14 @@ def dete_fzc(model_dict, data):
         # step_1
         dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
         # step_2
+
+
+        # todo 这边直接设置一下 ，使用到 get_sub_img_by_dete_obj 函数的时候，直接使用裁切的值即可
+        dete_res_fzc.img_ndarry = data['im']
+
         for each_dete_obj in dete_res_fzc:
-            crop_array = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
+            # crop_array = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
+            crop_array = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
             new_label, conf = model_fzc_2.detect_new(crop_array, data['name'])
             #
             each_dete_obj.tag = new_label
@@ -51,7 +57,8 @@ def dete_fzc(model_dict, data):
             if "model_fzc_rust" in model_dict:
                 # rust
                 if new_label in ["yt", "zd_yt"]:
-                    crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
+                    # crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
+                    crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)
                     rust_index, rust_f = model_fzc_rust.detect(crop_array_rust)
                     rust_label = ["fzc_normal", "fzc_rust"][int(rust_index)]
                     rust_f = float(rust_f)
