@@ -19,6 +19,7 @@ os.environ ['OPENBLAS_NUM_THREADS'] = str(cpu_num)
 os.environ ['MKL_NUM_THREADS'] = str(cpu_num)
 os.environ ['VECLIB_MAXIMUM_THREADS'] = str(cpu_num)
 os.environ ['NUMEXPR_NUM_THREADS'] = str(cpu_num)
+torch.set_num_threads(cpu_num)
 `
 
 #### 锁频

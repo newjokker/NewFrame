@@ -31,6 +31,13 @@ from dete import dete_nc, dete_fzc, dete_kkx, dete_xjQX, dete_jyhQX, dete_jyzZB,
 
 # fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
 
+cpu_num = 1                                                 # 这里设置成你想运行的CPU个数
+os.environ ['OMP_NUM_THREADS'] = str(cpu_num)
+os.environ ['OPENBLAS_NUM_THREADS'] = str(cpu_num)
+os.environ ['MKL_NUM_THREADS'] = str(cpu_num)
+os.environ ['VECLIB_MAXIMUM_THREADS'] = str(cpu_num)
+os.environ ['NUMEXPR_NUM_THREADS'] = str(cpu_num)
+torch.set_num_threads(cpu_num)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
