@@ -27,7 +27,7 @@ def dete_fzc(model_dict, data):
         # step_1
         dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
         dete_res_fzc.do_nms()
-        fzc_dete_res.filter_by_area(5000)
+        fzc_dete_res.filter_by_area(3200)
 
         # step_2
 
@@ -56,6 +56,9 @@ def dete_fzc(model_dict, data):
             fzc_dete_res.add_obj_2(each_dete_obj)
 
             # ----------------------------------------------------------------------------------------------------------
+
+            if each_dete_obj.get_area() < 8000:
+                continue
 
             crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)
             rust_index, rust_f = model_fzc_rust.detect(crop_array_rust)
