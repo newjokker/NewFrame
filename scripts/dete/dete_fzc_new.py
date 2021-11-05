@@ -26,6 +26,9 @@ def dete_fzc(model_dict, data):
         fzc_dete_res = DeteRes()
         # step_1
         dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
+        dete_res_fzc.do_nms()
+        fzc_dete_res.filter_by_area(5000)
+
         # step_2
 
         dete_res_fzc.img_ndarry = data['im']
