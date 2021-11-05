@@ -15,16 +15,10 @@ from JoTools.utils.CsvUtil import CsvUtil
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-img_dir = r"/usr/input_picture"
-res_dir = r"/usr/output_dir/save_res"
-log_path = r"/usr/output_dir/log"
-csv_path = r"/usr/output_dir/result.csv"
-res_txt_dir = r"/usr/output_dir/res_txt"
 dete_mode = 0
 # ----------------------------------------------------------------------------------------------------------------------
 obj_name = "_all_flow"
 time_str = str(time.time())[:10]
-start_time = time.time()
 # ----------------------------------------------------------------------------------------------------------------------
 
 def parse_args():

@@ -28,9 +28,8 @@ from lib.JoTools.utils.DecoratorUtil import DecoratorUtil
 # load model dete script
 from dete import dete_nc, dete_fzc, dete_kkx, dete_xjQX, dete_jyhQX, dete_jyzZB, all_model_restore
 
-
-# fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
-
+# ------------------ del -----------------------------------------
+# todo status
 cpu_num = 1                                                 # 这里设置成你想运行的CPU个数
 os.environ ['OMP_NUM_THREADS'] = str(cpu_num)
 os.environ ['OPENBLAS_NUM_THREADS'] = str(cpu_num)
@@ -38,6 +37,8 @@ os.environ ['MKL_NUM_THREADS'] = str(cpu_num)
 os.environ ['VECLIB_MAXIMUM_THREADS'] = str(cpu_num)
 os.environ ['NUMEXPR_NUM_THREADS'] = str(cpu_num)
 torch.set_num_threads(cpu_num)
+# ------------------ del -----------------------------------------
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
@@ -306,6 +307,14 @@ if __name__ == '__main__':
         # time.sleep(2)
 
         # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
+        end_time = time.time()
+        # add file to output_dir
+        res_txt = os.path.join(sign_dir, "res_txt")
+        os.makedirs(res_txt, exist_ok=True)
+        txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
+        with open(txt_path, 'w') as txt_file:
+            txt_file.write('done')
+
 
 
 

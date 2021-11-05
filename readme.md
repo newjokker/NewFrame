@@ -27,3 +27,10 @@ torch.set_num_threads(cpu_num)
 * 4.6 -> 2.2 
 
 * refer : https://blog.csdn.net/weixin_32759777/article/details/118541117
+
+
+### 注意
+
+* 武汉运行的时候锁核功能要去掉
+
+* 核对需要的

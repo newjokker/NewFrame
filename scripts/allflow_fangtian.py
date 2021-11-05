@@ -12,9 +12,10 @@ from JoTools.utils.CsvUtil import CsvUtil
 # ----------------------------------------------------------------------------------------------------------------------
 img_dir = r"/usr/input_picture"
 res_dir = r"/usr/output_dir/save_res"
+sign_dir = r"/usr/sign_dir"
 log_path = r"/usr/output_dir/log"
 csv_path = r"/usr/output_dir/result.csv"
-res_txt_dir = r"/usr/output_dir/res_txt"
+res_txt_dir = os.path.join(sign_dir, "res_txt")
 dete_mode = 0
 # ----------------------------------------------------------------------------------------------------------------------
 obj_name = "_all_flow"
