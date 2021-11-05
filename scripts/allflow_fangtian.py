@@ -70,17 +70,12 @@ def check_res_file_num(res_txt_dir, txt_num):
 
 for i in range(1, mul_process_num+1):
     each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2}".format(mul_process_num, i, dete_mode)
-    #each_cmd_str = r"python3 scripts/all_models_flow_mul.py --scriptIndex {0}-{1}".format(mul_process_num, i)
     each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
     each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
     each_pid = subprocess.Popen(each_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)
     print("pid : {0}".format(each_pid.pid))
     print(each_cmd_str)
     time.sleep(1)
-    #cmd = "taskset -a -pc {0} {1}".format('0,1', each_pid.pid)
-    #cmd = "taskset -pc {0} {1}".format('0,1', each_pid.pid)
-    #os.system(cmd)
-
 
 # --------------------------------------- 002 --------------------------------------------------------------------------
 
@@ -113,10 +108,6 @@ dete_img_index = 1
 while True:
 
     now_time = time.time()
-
-    # over time
-    #if now_time - start_time > max_use_time:
-    #    break
 
     # dete end
     if save_log.img_index > save_log.img_count:

@@ -41,7 +41,8 @@ def dete_kkx(model_dict, data):
         #
         kkxTC_1_dete_res.do_nms(0.3)
         kkxTC_1_save_dir = model_kkxTC_1.resizedImgPath
-        kkxTC_1_dete_res.crop_dete_obj(kkxTC_1_save_dir)
+        # kkxTC_1_dete_res.crop_dete_obj(kkxTC_1_save_dir)
+        kkxTC_1_dete_res.img_ndarry = data['im']
         # ---------------------------------------
         # kkxTC_2
         ###  单连接件 ###
@@ -54,7 +55,8 @@ def dete_kkx(model_dict, data):
             each_dete_kg_lm.reset_alarms([])
             # get array 连接件正框图片矩阵 np.array
             # each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj(each_dete_obj,RGB=True)
-            each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_from_crop(each_dete_obj, RGB=False)
+            # each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_from_crop(each_dete_obj, RGB=False)
+            each_sub_array = kkxTC_1_dete_res.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)
             # 小金具定位检测结果集合 on a ljc martrix-cap
             kkxTC_2_out = model_kkxTC_2.detect(each_sub_array, data['name'])
             if len(kkxTC_2_out[0]) > 0:
@@ -93,7 +95,7 @@ def dete_kkx(model_dict, data):
         #
         kkxTC_2_dete_res.do_nms(0.3)
         # 删除裁剪的小图
-        kkxTC_1_dete_res.del_sub_img_from_crop()
+        # kkxTC_1_dete_res.del_sub_img_from_crop()
 
         # ---------------------------------------
 
@@ -102,11 +104,13 @@ def dete_kkx(model_dict, data):
         # kkxQuiting_dete_res = DeteRes()
         # kkxRust_dete_res = DeteRes()
         #
+        kkxTC_2_dete_res.img_ndarry = data['im']
         for each_dete_obj in kkxTC_2_dete_res:
             if each_dete_obj.tag not in ['K', 'KG', 'Lm', 'K2', 'KG2']:
                 continue
             #
-            each_im = kkxTC_2_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
+            # each_im = kkxTC_2_dete_res.get_sub_img_by_dete_obj(each_dete_obj)
+            each_im = kkxTC_2_dete_res.get_sub_img_by_dete_obj_new(each_dete_obj)
             # -----------------
             # kkxTC
             label, prob = model_kkxTC_3.detect(each_im, 'resizedName')

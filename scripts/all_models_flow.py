@@ -31,8 +31,6 @@ from dete import dete_nc, dete_fzc, dete_kkx, dete_xjQX, dete_jyhQX, dete_jyzZB,
 
 # fixme 如何告诉外界，当前的模型处于三种状态中的哪一种（init，running，end）
 
-# fixme 将模型都转为 crop 模式，这样貌似跑得比较快（比赛的时候让张一辰测试一下哪个模式快一些）
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
@@ -135,6 +133,18 @@ def model_dete(img_path, model_dict, model_list):
     dete_res_all = DeteRes()
     dete_res_all.img_path = img_path
 
+    #
+    save_dir = os.path.join(output_dir, "save_res")
+    os.makedirs(save_dir, exist_ok=True)
+    each_save_name = os.path.split(img_path)[1]
+    each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
+    # each_save_path_jpg = os.path.join(save_dir, each_save_name)
+    #
+    if os.path.exists(each_save_path_xml):
+        print("* ignore img have res already")
+        return
+    #
+
     if "jyzZB" in model_list:
         jyzZB_dete_res = dete_jyzZB(model_dict, data)
         if jyzZB_dete_res:
@@ -184,12 +194,10 @@ def model_dete(img_path, model_dict, model_list):
         dete_res_all.print_as_fzc_format()
     else:
         print([])
-    save_dir = os.path.join(output_dir, "save_res")
-    os.makedirs(save_dir, exist_ok=True)
-    each_save_name = os.path.split(img_path)[1]
-    each_save_path = os.path.join(save_dir, each_save_name)
-    each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
-    # dete_res_all.draw_dete_res(each_save_path)
+
+
+
+    # dete_res_all.draw_dete_res(each_save_path_jpg)
     dete_res_all.save_to_xml(each_save_path_xml)
 
     # empty cache
@@ -199,8 +207,6 @@ def model_dete(img_path, model_dict, model_list):
 
 
 if __name__ == '__main__':
-
-    # todo 将每一个模型支持 两种模式，temp，crop
 
     args = parse_args()
     img_dir = args.imgDir.strip()
@@ -249,9 +255,20 @@ if __name__ == '__main__':
         # dete
         for each_img_path in img_path_list:
             dete_img_index += 1
+
+            # -------------------------------------
+            save_dir = os.path.join(output_dir, "save_res")
+            os.makedirs(save_dir, exist_ok=True)
+            each_save_name = os.path.split(each_img_path)[1]
+            each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
+            #
+            if os.path.exists(each_save_path_xml):
+                print("* ignore img have res already")
+                continue
+            # -------------------------------------
+
             print("* {0} : {1}".format(dete_img_index, each_img_path))
             try:
-                # each_model_list = get_model_list_from_img_name("", assign_model_list)
                 each_model_list = all_model_list
                 try:
                     each_dete_res = model_dete(each_img_path, all_model_dict, each_model_list)
@@ -277,6 +294,11 @@ if __name__ == '__main__':
                 if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
                     os.rmdir(each_img_dir)
         #
-        time.sleep(2)
+        exit()
+        # print("* wait for 2s")
+        # time.sleep(2)
+
+        # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
+
 
 
