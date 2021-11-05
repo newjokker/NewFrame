@@ -12,6 +12,7 @@ from lib.JoTools.utils.JsonUtil import JsonUtil
 from JoTools.utils.DecoratorUtil import DecoratorUtil
 import copy
 
+# version : v1.1.9.0 【核对完毕】
 
 @DecoratorUtil.time_this
 def dete_nc(model_dict, data):
