@@ -36,8 +36,7 @@ def dete_kkx(model_dict, data):
             label, score, [xmin, ymin, xmax, ymax] = each_res
             ljc_resizedName = data['name'] + '_' + label + '_' + str(i) + '.jpg'
             # add up_right obj
-            kkxTC_1_dete_res.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i,
-                                     describe=ljc_resizedName)
+            kkxTC_1_dete_res.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i, describe=ljc_resizedName)
         #
         kkxTC_1_dete_res.do_nms(0.3)
         kkxTC_1_save_dir = model_kkxTC_1.resizedImgPath
@@ -143,9 +142,9 @@ def dete_kkx(model_dict, data):
             # -----------------
             # kkxQuiting
             # 0:销脚可见 1:退出 2:销头销脚正对
-            if each_dete_obj.tag in ["Xnormal"]:
+            if each_dete_obj.tag in ['Xnormal']:
                 label, prob = model_kkxQuiting.detect(each_im, 'resizedName')
-                if label == '1' and prob > 0.5:
+                if label == 1 and prob > 0.5:
                     new_dete_obj = each_dete_obj.deep_copy()
                     new_dete_obj.tag = 'kkxTC'
                     kkxTC_dete_res.add_obj_2(new_dete_obj)
