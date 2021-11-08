@@ -44,6 +44,24 @@
     * /opt/conda/lib/python3.7/site-packages/torch/nn/init.py 
     
     * /opt/conda/lib/python3.7/site-packages/torch/nn/modules/activation.py
+
+* lib 中要修改的部分（与 2021.11.5时的版本）
+
+    * JoTools 需要支持 get_img_by_dete_obj_new , 也就是直接支持插入 data 进行 crop 的版本
+    
+    * yolov5_libs 版本， 
+
+* model 进行加密
+
+    * fzc step 1 要使用 py35 版本的，因为那个版本的 torch 版本和 docker 中的 torch 版本一致
+    
+* 模型要支持多进程
+    * /home/ldq/v0.0.1/lib/detect_libs/abstractBase.py 中修改代码
+    * 将模型解压到随机文件夹中，这样就能同时启动两套模型了 
+    `self.cachePath = os.path.join(os.path.expanduser('~'), '.cache')
+    self.cachePath = os.path.join(self.cachePath, str(uuid.uuid1()))
+    `
+    
     
 
 ### 版本

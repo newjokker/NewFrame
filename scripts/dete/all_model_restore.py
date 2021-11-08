@@ -24,11 +24,11 @@ from lib.detect_libs.vggClassify import VggClassify
 from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
 from lib.detect_libs.ljcY5Detection import LjcDetection
 from lib.detect_libs.kkgY5Detection import KkgDetection
-from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
+# from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
 #
-from lib_xjQX.detect_libs.ljjxjR2cnnDetection import ljcR2cnnDetection
-from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
-from lib_xjQX.detect_libs.xjDeeplabDetection import xjDeeplabDetection
+#from lib_xjQX.detect_libs.ljjxjR2cnnDetection import ljcR2cnnDetection
+#from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
+#from lib_xjQX.detect_libs.xjDeeplabDetection import xjDeeplabDetection
 #
 from lib.JoTools.txkjRes.resTools import ResTools
 from lib.JoTools.utils.FileOperationUtil import FileOperationUtil
@@ -42,8 +42,8 @@ from lib.JoTools.utils.JsonUtil import JsonUtil
 from lib.detect_libs.clsViTDetection import ClsViTDetection
 
 # jyhQX
-from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
-from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
+#from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
+#from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
 #
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 # time analysis
@@ -90,7 +90,8 @@ def all_model_restore(args, scriptName, model_list):
         model_dict["model_fzc_2"] = model_fzc_2
 
     if "fzcRust" in model_list:
-        model_fzc_rust = ClsDetectionPyTorch(args, "fzc_rust", scriptName)
+        #model_fzc_rust = ClsDetectionPyTorch(args, "fzc_rust", scriptName)
+        model_fzc_rust = ClsViTDetection(args, "fzc_rust", scriptName)
         model_fzc_rust.model_restore()
         model_dict["model_fzc_rust"] = model_fzc_rust
 
@@ -100,24 +101,24 @@ def all_model_restore(args, scriptName, model_list):
         model_dict["model_fnc"] = model_fnc
 
     if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
+        # kkx
         model_kkxTC_1 = LjcDetection(args, "kkxTC_ljc", scriptName)
         model_kkxTC_1.model_restore()
         model_kkxTC_2 = KkgDetection(args, "kkxTC_kkx", scriptName)
         model_kkxTC_2.model_restore()
-        # vit
-        # model_kkxTC_3 = ClsDetectionPyTorch(args, "kkxTC_lm_cls", scriptName)
         model_kkxTC_3 = ClsViTDetection(args, "kkxTC_lm_cls_vit", scriptName)
         model_kkxTC_3.model_restore()
-        #
-        model_kkxQuiting = ClsDetectionPyTorch(args, "kkxQuiting_cls", scriptName)
+        # kkxQuiting
+        model_kkxQuiting = ClsViTDetection(args, "kkxQuiting_cls", scriptName)
         model_kkxQuiting.model_restore()
-        model_kkxRust = VggClassify(args, "kkxRust", scriptName)
-        model_kkxRust.model_restore()
         model_dict["model_kkxTC_1"] = model_kkxTC_1
         model_dict["model_kkxTC_2"] = model_kkxTC_2
         model_dict["model_kkxTC_3"] = model_kkxTC_3
         model_dict["model_kkxQuiting"] = model_kkxQuiting
-        model_dict["model_kkxRust"] = model_kkxRust
+        # 
+        #model_kkxRust = VggClassify(args, "kkxRust", scriptName)
+        #model_kkxRust.model_restore()
+        #model_dict["model_kkxRust"] = model_kkxRust
 
     if "waipo" in model_list:
         model_waipo = YOLOV5Detection(args, "waipo", scriptName)
