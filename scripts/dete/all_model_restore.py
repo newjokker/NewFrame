@@ -111,14 +111,19 @@ def all_model_restore(args, scriptName, model_list):
         # kkxQuiting
         model_kkxQuiting = ClsViTDetection(args, "kkxQuiting_cls", scriptName)
         model_kkxQuiting.model_restore()
+        # kkxClearence
+        model_kkxClearence = ClsViTDetection(args, "kkxClearence", scriptName)
+        model_kkxClearence.model_restore()
+        # kkxRust
+        #model_kkxRust = VggClassify(args, "kkxRust", scriptName)
+        #model_kkxRust.model_restore()
+        #model_dict["model_kkxRust"] = model_kkxRust
+        #
         model_dict["model_kkxTC_1"] = model_kkxTC_1
         model_dict["model_kkxTC_2"] = model_kkxTC_2
         model_dict["model_kkxTC_3"] = model_kkxTC_3
         model_dict["model_kkxQuiting"] = model_kkxQuiting
-        # 
-        #model_kkxRust = VggClassify(args, "kkxRust", scriptName)
-        #model_kkxRust.model_restore()
-        #model_dict["model_kkxRust"] = model_kkxRust
+        model_dict["model_kkxClearence"] = model_kkxClearence
 
     if "waipo" in model_list:
         model_waipo = YOLOV5Detection(args, "waipo", scriptName)
