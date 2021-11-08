@@ -70,7 +70,7 @@
 
 * environment:v0.0.3 , 没有 tensorflow 只有 torh 的环境(4.13G)
 
-* environment:v0.0.3 , 没有 tensorflow 只有 torh 的环境, 去掉临时文件的缩小版本（3.96G）
+* environment:v0.0.4 , 没有 tensorflow 只有 torh 的环境, 去掉临时文件的缩小版本（3.96G）
 
 * 
 

@@ -30,9 +30,7 @@ def dete_fzc(model_dict, data):
         dete_res_fzc.filter_by_area(3200)
 
         # step_2
-
         dete_res_fzc.img_ndarry = data['im']
-
         for each_dete_obj in dete_res_fzc:
             crop_array = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False, augment_parameter=[0.1, 0.1, 0.1, 0.1])
             new_label, conf = model_fzc_2.detect_new(crop_array, data['name'])
