@@ -18,28 +18,42 @@
 
 * docker pull pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
 
-* 更新后的文件放在当前文件所在的文件夹中
+* vim 安装 : apt install vim
 
 * 新增的包，已经对应的版本
 
+    * cv2 : pip install -i https://pypi.douban.com/simple opencv-python
+        * 报错：ImportError: libgthread-2.0.so.0: cannot open shared object file: No such file or directory
+        * 解决：apt-get install libglib2.0-0
+    * flask
+    * shapely
+    * JoUtils 
+    * Crypto
+        * 报错：ModuleNotFoundError: No module named 'Crypto'
+        * 解决：https://cloud.tencent.com/developer/article/1563346
+    * matplotlib 
+    * pandas 
+    * seaborn
+    * -------------------------------------------
     * tensorflow-gpu         1.15.0
-    * 
-   
 
-* /opt/conda/lib/python3.7/site-packages/torch/nn/init.py 
+* 删除测试之后的 ~/.cache 里面的文件夹
 
-* /opt/conda/lib/python3.7/site-packages/torch/nn/modules/activation.py
+* 更改 torch 包中的代码
 
+    * /opt/conda/lib/python3.7/site-packages/torch/nn/init.py 
+    
+    * /opt/conda/lib/python3.7/site-packages/torch/nn/modules/activation.py
+    
 
-# todo 环境写为 一个 docker file 直接打包
-
-
-
-### 细节
-
-* 只有环境没有模型和代码的版本 fangtian:v0.4.1.3
+### 版本
 
 * 
 
+* environment:v0.0.3 , 没有 tensorflow 只有 torh 的环境(4.13G)
+
+* environment:v0.0.3 , 没有 tensorflow 只有 torh 的环境, 去掉临时文件的缩小版本（3.96G）
+
+* 
 
 
