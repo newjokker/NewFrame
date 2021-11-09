@@ -24,12 +24,7 @@ from lib.detect_libs.vggClassify import VggClassify
 from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
 from lib.detect_libs.ljcY5Detection import LjcDetection
 from lib.detect_libs.kkgY5Detection import KkgDetection
-# from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
-#
-#from lib_xjQX.detect_libs.ljjxjR2cnnDetection import ljcR2cnnDetection
-#from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
-#from lib_xjQX.detect_libs.xjDeeplabDetection import xjDeeplabDetection
-#
+
 from lib.JoTools.txkjRes.resTools import ResTools
 from lib.JoTools.utils.FileOperationUtil import FileOperationUtil
 from lib.JoTools.utils.CsvUtil import CsvUtil
@@ -45,6 +40,12 @@ from lib.detect_libs.clsViTDetection import ClsViTDetection
 #from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
 #from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
 #
+# from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
+#
+#from lib_xjQX.detect_libs.ljjxjR2cnnDetection import ljcR2cnnDetection
+from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
+# from lib_xjQX.detect_libs.xjDeeplabDetection import xjDeeplabDetection
+#
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 # time analysis
 from JoTools.utils.DecoratorUtil import DecoratorUtil
@@ -56,56 +57,50 @@ def all_model_restore(args, scriptName, model_list):
     """模型预热"""
     model_dict = {}
 
-    if "xjQX" in model_list:
-        # model_xjQX_1 = ljcR2cnnDetection(args, "ljjxj", scriptName)
-        # model_xjQX_1.model_restore()
-        model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
-        model_xjQX_1.model_restore()
-
-        #
-        model_xjQX_2 = xjDeeplabDetection(args, "xj_deeplab", scriptName)
-        model_xjQX_2.model_restore()
-        model_dict["model_xjQX_1"] = model_xjQX_1
-        model_dict["model_xjQX_2"] = model_xjQX_2
-
     if "jyzZB" in model_list:
         model_jyzZB_1 = YOLOV5Detection(args, "jyz", scriptName)
         model_jyzZB_1.model_restore()
+        #
         model_jyzZB_2 = YOLOV5Detection(args, "jyzzb", scriptName)
         model_jyzZB_2.model_restore()
+        #
         model_dict["model_jyzZB_1"] = model_jyzZB_1
         model_dict["model_jyzZB_2"] = model_jyzZB_2
 
     if "nc" in model_list:
         model_nc = YOLOV5Detection(args, "nc", scriptName)
         model_nc.model_restore()
+        #
         model_dict["model_nc"] = model_nc
 
-    if "fzc" in model_list:
+    if "fzcRust" in model_list or "fzc" in model_list:
         model_fzc_1 = FasterDetectionPytorch(args, "fzc_step_one", scriptName)
         model_fzc_1.model_restore()
+        #
         model_fzc_2 = VggClassify(args, "fzc_step_new", scriptName)
         model_fzc_2.model_restore()
-        model_dict["model_fzc_1"] = model_fzc_1
-        model_dict["model_fzc_2"] = model_fzc_2
-
-    if "fzcRust" in model_list:
-        #model_fzc_rust = ClsDetectionPyTorch(args, "fzc_rust", scriptName)
+        #
         model_fzc_rust = ClsViTDetection(args, "fzc_rust", scriptName)
         model_fzc_rust.model_restore()
+        #
+        model_dict["model_fzc_1"] = model_fzc_1
+        model_dict["model_fzc_2"] = model_fzc_2
         model_dict["model_fzc_rust"] = model_fzc_rust
 
     if "fncDK" in model_list:
         model_fnc = YOLOV5Detection(args, "fnc", scriptName)
         model_fnc.model_restore()
+        #
         model_dict["model_fnc"] = model_fnc
 
-    if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
+    if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxClearence" in model_list:
         # kkx
         model_kkxTC_1 = LjcDetection(args, "kkxTC_ljc", scriptName)
         model_kkxTC_1.model_restore()
+        #
         model_kkxTC_2 = KkgDetection(args, "kkxTC_kkx", scriptName)
         model_kkxTC_2.model_restore()
+        #
         model_kkxTC_3 = ClsViTDetection(args, "kkxTC_lm_cls_vit", scriptName)
         model_kkxTC_3.model_restore()
         # kkxQuiting
@@ -114,10 +109,6 @@ def all_model_restore(args, scriptName, model_list):
         # kkxClearence
         model_kkxClearence = ClsViTDetection(args, "kkxClearence", scriptName)
         model_kkxClearence.model_restore()
-        # kkxRust
-        #model_kkxRust = VggClassify(args, "kkxRust", scriptName)
-        #model_kkxRust.model_restore()
-        #model_dict["model_kkxRust"] = model_kkxRust
         #
         model_dict["model_kkxTC_1"] = model_kkxTC_1
         model_dict["model_kkxTC_2"] = model_kkxTC_2
@@ -128,26 +119,45 @@ def all_model_restore(args, scriptName, model_list):
     if "waipo" in model_list:
         model_waipo = YOLOV5Detection(args, "waipo", scriptName)
         model_waipo.model_restore()
+        #
         model_dict["model_waipo"] = model_waipo
 
     if "ljcRust" in model_list:
         model_ljc_rust_1 = YOLOV5Detection(args, "ljc_rust_one", scriptName)
         model_ljc_rust_1.model_restore()
+        #
         model_ljc_rust_2 = ClsDetectionPyTorch(args, "ljc_rust_two", scriptName)
         model_ljc_rust_2.model_restore()
+        #
         model_dict["model_ljc_rust_1"] = model_ljc_rust_1
         model_dict["model_ljc_rust_2"] = model_ljc_rust_2
 
     if "jyhQX" in model_list:
         model_jyhQX_1 = YOLOV5Detection(args, "jyhqx_one", scriptName)
         model_jyhQX_1.model_restore()
+        #
         model_jyhQX_2 = R2cnnDetection(args, "jyhqx_two", scriptName)
         model_jyhQX_2.model_restore()
+        #
         model_jyhQX_3 = jyhDeeplabDetection(args, "jyhqx_three", scriptName)
         model_jyhQX_3.model_restore()
+        #
         model_dict["model_jyhqx_1"] = model_jyhQX_1
         model_dict["model_jyhqx_2"] = model_jyhQX_2
         model_dict["model_jyhqx_3"] = model_jyhQX_3
+
+    if "xjQX" in model_list:
+        # model_xjQX_1 = ljcR2cnnDetection(args, "ljjxj", scriptName)
+        # model_xjQX_1.model_restore()
+        #
+        model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
+        model_xjQX_1.model_restore()
+        #
+        model_xjQX_2 = xjDeeplabDetection(args, "xj_deeplab", scriptName)
+        model_xjQX_2.model_restore()
+        #
+        model_dict["model_xjQX_1"] = model_xjQX_1
+        model_dict["model_xjQX_2"] = model_xjQX_2
 
     return model_dict
 

@@ -1,0 +1,14 @@
+﻿{
+    "repositoryName": "txkj",
+    "version": "v0.3.11.1",
+    "vendor": "南京土星视界科技有限公司",
+    "gpuType": [
+        "RTX 2080Ti"
+    ],
+    "modelList": [
+        "M1",
+        "M3",
+        "M4",
+        "M5"
+    ]
+}

@@ -12,6 +12,11 @@ from lib.JoTools.utils.JsonUtil import JsonUtil
 from JoTools.utils.DecoratorUtil import DecoratorUtil
 import copy
 
+# kkxTC :
+# kkxRust :
+# kkxQuiting :
+# kkxClearance :
+
 
 @DecoratorUtil.time_this
 def dete_kkx(model_dict, data):
@@ -149,9 +154,6 @@ def dete_kkx(model_dict, data):
                 new_dete_obj.x2 = int(xmax + extendRate*cap_x)
                 new_dete_obj.y1 = int(ymin - extendRate*cap_y)
                 new_dete_obj.y2 = int(ymax + extendRate*cap_y)
-                #
-                print(new_dete_obj.get_name_str())
-                #
                 each_im = kkxTC_1_dete_res.get_sub_img_by_dete_obj_new(new_dete_obj)
                 label, prob = model_kkxClearence.detect(each_im, 'resizedName')
                 new_dete_obj.conf = float(prob)
