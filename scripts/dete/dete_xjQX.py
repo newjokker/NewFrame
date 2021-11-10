@@ -6,6 +6,7 @@ import cv2
 import xml.etree.ElementTree as ET
 import configparser
 import math
+import time
 
 from lib.JoTools.txkjRes.resTools import ResTools
 from lib.JoTools.utils.FileOperationUtil import FileOperationUtil
@@ -26,13 +27,18 @@ def dete_xjQX(model_dict, data):
         model_xjQX_1 = model_dict["model_xjQX_1"]
         model_xjQX_2 = model_dict["model_xjQX_2"]
         #
+        start_time = time.time()
         xjQX_dete_res = DeteRes()
         detectBoxes = model_xjQX_1.detect(data['im'], data['name'])
+        # todo 重写第一步的后处理，所有要新加的逻辑都放在第一步的后处理
+
         results = model_xjQX_1.postProcess2(data['im'], data['name'], detectBoxes)
-        #
+
+        stop_model_1_time = time.time()
+
         for xjBox in results:
             resizedName = xjBox['resizedName']
-            resizedImg = im[xjBox['ymin']:xjBox['ymax'], xjBox['xmin']:xjBox['xmax']]
+            resizedImg = data['im'][xjBox['ymin']:xjBox['ymax'], xjBox['xmin']:xjBox['xmax']]
             segImage = model_xjQX_2.detect(resizedImg, resizedName)
             result = model_xjQX_2.postProcess(segImage, resizedName, xjBox)
             # add obj
@@ -41,6 +47,9 @@ def dete_xjQX(model_dict, data):
                 x2, y2 = x1 + w, y1 + h
                 tag = result["class"]
                 xjQX_dete_res.add_obj(x1, y1, x2, y2, tag, conf=-1, assign_id=-1, describe='')
+        end_time = time.time()
+        print("* step 1 : {0}".format(stop_model_1_time - start_time))
+        print("* step 2 : {0}".format(end_time - stop_model_1_time))
         # torch.cuda.empty_cache()
         return xjQX_dete_res
     except Exception as e:
@@ -64,6 +73,7 @@ def Judge_Hnormal_fail(angle1, angle2, assign_theta=10):
     else:
         return normal_or_fail(angle2, assign_theta), 0, angle1
 
+# @DecoratorUtil.time_this
 def angle_r2cnn(x_add, y_add, each_dete_obj, result, des):
     """angle r2cnn """
     x_start, y_start, x_hend, y_hend, x_vend, y_vend = result['xVstart'], result['yVstart'], result['xHend'], result['yHend'], result['xVend'], result['yVend']
@@ -85,11 +95,12 @@ def angle_r2cnn(x_add, y_add, each_dete_obj, result, des):
     jyz_info['x2'] = X2
     jyz_info['y1'] = Y1
     jyz_info['y2'] = Y2
-    print("jyh_info:{}".format(jyh_info))
-    print("jyz_info:{}".format(jyz_info))
+    # print("jyh_info:{}".format(jyh_info))
+    # print("jyz_info:{}".format(jyz_info))
     jyz_angle, new_jyh_info = caculateJyzAngleAndIntersectionWithJyh(jyh_info, jyz_info)
     return jyz_angle
 
+# @DecoratorUtil.time_this
 def caculateJyzAngleAndIntersectionWithJyh(jyh_info,jyz_info):
     #映射回原图尺寸
     #for jyz in jyzResult:
@@ -110,6 +121,7 @@ def caculateJyzAngleAndIntersectionWithJyh(jyh_info,jyz_info):
     new_angle_obj['prob'] = prob
     return jyz_angle,new_angle_obj
 
+# @DecoratorUtil.time_this
 def cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
     point_is_exist = False
     x = y = 0

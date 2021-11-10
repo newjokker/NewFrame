@@ -35,7 +35,9 @@
     * pandas 
     * seaborn
     * -------------------------------------------
-    * tensorflow-gpu         1.15.0
+    * tensorflow-gpu         1.15.0 : pip install -i https://pypi.douban.com/simple tensorflow-gpu==1.15.0
+    * sklearn
+    * 
 
 * 删除测试之后的 ~/.cache 里面的文件夹
 
@@ -49,7 +51,11 @@
 
     * JoTools 需要支持 get_img_by_dete_obj_new , 也就是直接支持插入 data 进行 crop 的版本
     
-    * yolov5_libs 版本， 
+    * yolov5_libs 版本，yolov5_libs 里面有很多需要修改的地方，现在编译为 so 了看不到了，有时间重新写一下
+    
+    * lib/r2cnnPytorch_libs/maskrcnn_benchmark 中缺少一个文件，需要拷贝过去，这个是在运行环境上编译而成的：_C.cpython-37m-x86_64-linux-gnu.so
+    
+    * xjDeeplabDetection 中相关的 print 进行删除
 
 * model 进行加密
 
