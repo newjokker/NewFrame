@@ -33,7 +33,6 @@ def dete_xjQX(model_dict, data):
         dete_res.img_path = data['path']
         dete_res.draw_dete_res(os.path.join('/v0.0.1/tmpfiles', data['name']))
 
-
         # todo 线夹个数大于 0 就直接返回 0
         xj_count = 0
         xj_obj = None
@@ -60,7 +59,10 @@ def dete_xjQX(model_dict, data):
         if abs(angle_1 - angle_2) > 100 or abs(angle_1 - angle_2) < 80:
             xj_obj.tag = 'XJfail'
             xj_res.add_obj_2(xj_obj)
-        
+        else:
+            xj_obj.tag = 'XJnormal'
+            xj_res.add_obj_2(xj_obj)
+
         return xj_res
 
     except Exception as e:

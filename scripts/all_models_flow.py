@@ -251,6 +251,7 @@ if __name__ == '__main__':
     #
     # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
     all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
+    # all_model_list = ['xjQX']
 
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
     print("* warm model success ")

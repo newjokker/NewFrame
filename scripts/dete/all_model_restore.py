@@ -37,11 +37,9 @@ from lib.JoTools.utils.JsonUtil import JsonUtil
 
 
 # jyhQX
-#from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
-#from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
-#
-# from lib.detect_libs.clsDetectionPyTorch import ClsDetectionPyTorch
-#
+from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
+from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
+# xjQX
 from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
 from lib.detect_libs.xjDeeplabDetection import xjDeeplabDetection
 #
@@ -153,7 +151,7 @@ def all_model_restore(args, scriptName, model_list):
         model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
         model_xjQX_1.model_restore()
         #
-        model_xjQX_2 = xjDeeplabDetection(args, "xj_deeplab", scriptName)
+        model_xjQX_2 = xjDeeplabDetection(args, "xjQX_deeplab", scriptName)
         model_xjQX_2.model_restore()
         #
         model_dict["model_xjQX_1"] = model_xjQX_1
