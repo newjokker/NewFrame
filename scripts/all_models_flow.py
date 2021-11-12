@@ -204,7 +204,6 @@ def model_dete(img_path, model_dict, model_list):
         print([])
 
 
-
     # dete_res_all.draw_dete_res(each_save_path_jpg)
     dete_res_all.save_to_xml(each_save_path_xml)
 
@@ -250,8 +249,8 @@ if __name__ == '__main__':
     scriptName = os.path.basename(__file__).split('.')[0]
     #
     # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX']
-    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
-    # all_model_list = ['xjQX']
+    # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
+    all_model_list = ['xjQX', 'jyhQX']
 
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
     print("* warm model success ")

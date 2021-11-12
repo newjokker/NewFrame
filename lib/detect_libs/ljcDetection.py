@@ -1,0 +1,72 @@
+import os
+import cv2
+from ..detect_utils.utils import check_record_file_path
+from ..detect_utils.tryexcept import try_except
+from ..detect_libs.fasterDetection import FasterDetection
+this_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+class LjcDetection(FasterDetection):
+    def __init__(self, args, objName, scriptName):
+        super(LjcDetection, self).__init__(args, objName, scriptName)
+        self.resizedImgPath = self.getTmpPath('resizedImg')
+
+    @try_except()
+    def postProcess(self, im, name, detectBoxes):
+        results = []
+        try:
+            for dBox in detectBoxes:
+                label, index, xmin, ymin, xmax, ymax, prob = dBox
+
+                resizedName = name + "_resized_" + self.objName + "_" + str(index)
+                xExtend, yExtend = self.getExtendForLjc(label, xmax - xmin, ymax - ymin)
+                ymin, ymax, xmin, xmax = self.getResizedImgSize(im, xmin, xmax, ymin, ymax, xExtend, yExtend)
+                resultImg = im[ymin:ymax, xmin:xmax]
+
+                w = im.shape[1]
+                h = im.shape[0]
+                S_im = w * h
+                S_ljc = (xmax - xmin) * (ymax - ymin)
+                S_rate = S_ljc / S_im
+                self.log.info("-----{} : {} : {}".format(resizedName, label, S_rate))
+
+                ljc_Srate_threshold = 0
+                if S_rate > ljc_Srate_threshold:
+                    ##截ljc图###
+                    cv2.imwrite(os.path.join(self.resizedImgPath, resizedName + '.jpg'), resultImg)
+                    results.append({'resizedName': resizedName, 'label': label, 'index': index, 'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax})
+
+        except Exception as e:
+            self.log.info(e)
+            self.log.info(e.__traceback__.tb_frame.f_globals["__file__"])
+            self.log.info(e.__traceback__.tb_lineno)
+        return results
+
+
+    @try_except()
+    def getExtendForLjc(self, label, w, h):
+        switchTable = {
+            "L88": (150, 150)
+        }
+        if "L88" in label:
+            if w > h:
+                gap = (w - h) // 2
+                return (150, 150)
+            else:
+                gap = (h - w) // 2
+                return (150, 150 - gap)
+        if label in switchTable.keys():
+            return switchTable[label]
+        else:
+            return (150, 150)
+
+
+    @try_except()
+    def getResizedImgSize(self, im, xmin, xmax, ymin, ymax, xExtend, yExtend):
+        width = im.shape[1]
+        height = im.shape[0]
+        xmin_r = max(xmin - xExtend, 0)
+        xmax_r = min(xmax + xExtend, width)
+        ymin_r = max(ymin - yExtend, 0)
+        ymax_r = min(ymax + yExtend, height)
+        return ymin_r, ymax_r, xmin_r, xmax_r

@@ -77,8 +77,8 @@ if __name__ == "__main__":
             break
         else:
             use_time = time.time()-start_time
-            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / xml_count))
-            time.sleep(5)
+            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
+            time.sleep(30)
 
     # ------------------------------------------------------------------------------------------------------------------
     print("* xml to csv")
