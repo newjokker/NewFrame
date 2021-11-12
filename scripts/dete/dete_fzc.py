@@ -26,7 +26,7 @@ def dete_fzc(model_dict, data):
         fzc_dete_res = DeteRes()
         # step_1
         dete_res_fzc = model_fzc_1.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
-        dete_res_fzc.do_nms()
+        dete_res_fzc.do_nms(0.1, ignore_tag=True)
         dete_res_fzc.filter_by_area(3200)
 
         # step_2
@@ -37,7 +37,7 @@ def dete_fzc(model_dict, data):
             #
             each_dete_obj.tag = new_label
             each_dete_obj.conf = conf
-            #
+            # fzc_broken,gt,sm,yt,zd_yt,other,qx,fs
             if each_dete_obj.tag == "fzc_broken":
                 if each_dete_obj.conf > 0.9:
                     each_dete_obj.tag = "fzc_broken"
@@ -47,7 +47,8 @@ def dete_fzc(model_dict, data):
                 each_dete_obj.tag = "other_other"
             else:
                 if each_dete_obj.conf > 0.6:
-                    each_dete_obj.tag = "Fnormal"
+                    # each_dete_obj.tag = "Fnormal"
+                    pass
                 else:
                     each_dete_obj.tag = "other_Fnormal"
             # add fzc broken
@@ -56,6 +57,10 @@ def dete_fzc(model_dict, data):
             # ----------------------------------------------------------------------------------------------------------
 
             if each_dete_obj.get_area() < 8000:
+                continue
+
+            # fixme 过滤掉那些应该不属于防振锤的类型
+            if each_dete_obj.tag not in ['fzc_broken', 'yt', 'zd_yt']:
                 continue
 
             crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)
