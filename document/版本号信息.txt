@@ -80,6 +80,9 @@
 
 * environment:v0.0.4 , 没有 tensorflow 只有 torh 的环境, 去掉临时文件的缩小版本（3.96G）
 
+* environment:v0.0.5 , 可以运行所有模型的环境（要比赛的，包括两个倾斜），
+
+
 * wuhan_ft:v0.0.2 ，重新搞定环境并成功运行 fzc,fzcRust,nc,kkxTC,kkxQUiting,jyzZB 六个模型的第一个版本，等待马慧娴进行测试
 
 * wuhan_ft:v1.1.0, 增加螺母松动缺陷在里面

@@ -31,8 +31,6 @@ def dete_xjQX(model_dict, data):
         #
         #dete_res.print_as_fzc_format() 
         dete_res.img_path = data['path']
-        dete_res.draw_dete_res(os.path.join('/v0.0.1/tmpfiles', data['name']))
-
         # todo 线夹个数大于 0 就直接返回 0
         xj_count = 0
         xj_obj = None

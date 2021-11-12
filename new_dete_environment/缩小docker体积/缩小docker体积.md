@@ -37,7 +37,7 @@
     * -------------------------------------------
     * tensorflow-gpu         1.15.0 : pip install -i https://pypi.douban.com/simple tensorflow-gpu==1.15.0
     * sklearn
-    * 
+    * yacs 
 
 * 删除测试之后的 ~/.cache 里面的文件夹
 
