@@ -35,13 +35,6 @@ from lib.JoTools.txkjRes.deteObj import DeteObj
 from lib.JoTools.txkjRes.deteAngleObj import DeteAngleObj
 from lib.JoTools.utils.JsonUtil import JsonUtil
 
-
-# jyhQX
-from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
-from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
-# xjQX
-from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
-from lib.detect_libs.xjDeeplabDetection import xjDeeplabDetection
 #
 # load dict
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
@@ -131,6 +124,10 @@ def all_model_restore(args, scriptName, model_list):
         model_dict["model_ljc_rust_2"] = model_ljc_rust_2
 
     if "jyhQX" in model_list:
+        # jyhQX
+        from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
+        from lib.detect_libs.jyhDeeplabDetection import jyhDeeplabDetection
+        #
         model_jyhQX_1 = YOLOV5Detection(args, "jyhqx_one", scriptName)
         model_jyhQX_1.model_restore()
         #
@@ -145,8 +142,9 @@ def all_model_restore(args, scriptName, model_list):
         model_dict["model_jyhqx_3"] = model_jyhQX_3
 
     if "xjQX" in model_list:
-        # model_xjQX_1 = ljcR2cnnDetection(args, "ljjxj", scriptName)
-        # model_xjQX_1.model_restore()
+        # xjQX
+        from lib.detect_libs.xjdectR2cnnPytorchDetection import XjdectR2cnnDetection
+        from lib.detect_libs.xjDeeplabDetection import xjDeeplabDetection
         #
         model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
         model_xjQX_1.model_restore()
