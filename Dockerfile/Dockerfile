@@ -3,7 +3,7 @@
 FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
 
 # -y：yes，在命令行交互提示中，直接输入 yes
-RUN apt-get update && apt-get install vim -y && apt-get install libglib2.0-0 -y && apt install libgl1-mesa-glx -y
+RUN apt-get update && apt-get install vim -y && apt-get install libglib2.0-0 -y && apt install libgl1-mesa-glx -y && apt-get install gcc -y
 
 # create dictory and se as work dictory
 RUN mkdir /v0.0.1 && mkdir /v0.0.1/docker_tmp
@@ -15,6 +15,7 @@ RUN pip install -i https://pypi.douban.com/simple \
     flask\
     shapely\
     pycryptodome\
+    Cython\
     matplotlib\
     pandas\
     seaborn\
@@ -38,7 +39,7 @@ RUN rm -r /v0.0.1/docker_tmp
 COPY ./data/v0.0.1 /v0.0.1
 
 # compile the py
-CMD ['python3 /v0.0.1/script/tools/encrypt.py -end /v0.0.1/lib -env /opt/conda/pkgs/python-3.7.7-h191fe78_0_cpython/include/python3.7m -c']
+RUN python3 /v0.0.1/scripts/tools/encrypt.py -end /v0.0.1/lib/detect_libs/,/v0.0.1/lib/JoTools/,/v0.0.1/lib/detect_utils/,/v0.0.1/scripts/dete/ -env /opt/conda/pkgs/python-3.7.7-h191fe78_0_cpython/include/python3.7m -c
 
 # todo 将编译模型也放在最后做，最后改一下 config 中的加密为 True 就行
 
