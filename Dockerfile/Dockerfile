@@ -43,4 +43,7 @@ COPY ./data/v0.0.1 /v0.0.1
 #docker run --gpus 'device=0' -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_dir:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -v /home/ldq/logs:/v0.0.1/logs -it wuhan_ft:v0.0.2 /bin/bash
 #python3 script/allflow_wuhan.py
 
+# run startServer.sh at the end
+#CMD ["/v0.0.1/startServe.sh"]
+
 
