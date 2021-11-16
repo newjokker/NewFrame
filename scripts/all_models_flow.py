@@ -153,6 +153,8 @@ def model_dete(img_path, model_dict, model_list):
         return
     #
 
+    # todo 下面的逻辑使用一个循环进行维护
+
     if "jyzZB" in model_list:
         jyzZB_dete_res = dete_jyzZB(model_dict, data)
         if jyzZB_dete_res:
@@ -260,10 +262,10 @@ if __name__ == '__main__':
     #
     while True:
         img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir, dete_mode)
+        print("dete model_list : {0}".format(len(img_path_list)))
         # dete
         for each_img_path in img_path_list:
             dete_img_index += 1
-
             # -------------------------------------
             save_dir = os.path.join(output_dir, "save_res")
             os.makedirs(save_dir, exist_ok=True)
@@ -271,11 +273,13 @@ if __name__ == '__main__':
             each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
             #
             if os.path.exists(each_save_path_xml):
-                print("* ignore img have res already")
+                print("* ignore img have res already : {0}".format(each_save_path_xml))
                 continue
+            else:
+                print("* {0} : {1}".format(dete_img_index, each_img_path))
+
             # -------------------------------------
 
-            print("* {0} : {1}".format(dete_img_index, each_img_path))
             try:
                 each_model_list = all_model_list
                 try:

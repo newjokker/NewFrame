@@ -25,6 +25,8 @@
     * cv2 : pip install -i https://pypi.douban.com/simple opencv-python
         * 报错：ImportError: libgthread-2.0.so.0: cannot open shared object file: No such file or directory
         * 解决：apt-get install libglib2.0-0
+        * 报错：ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+        * 解决：apt install libgl1-mesa-glx
     * flask
     * shapely
     * JoUtils 
