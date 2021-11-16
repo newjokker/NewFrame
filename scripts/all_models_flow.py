@@ -47,7 +47,7 @@ def parse_args():
     parser.add_argument('--modelList', dest='modelList', default="M1,M2,M3,M4,M5,M6,M7,M8,M9")
     parser.add_argument('--jsonPath', dest='jsonPath', default=r"/usr/input_picture_attach/pictureName.json")
     parser.add_argument('--outputDir', dest='outputDir', default=r"/usr/output_dir")
-    parser.add_argument('--signDir', dest='signDir', default=r"/usr/sign")
+    parser.add_argument('--signDir', dest='signDir', default=r"/v0.0.1/sign")
     #
     parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")
     parser.add_argument('--deteMode', dest='deteMode',type=int, default=0)            # 0 : 处理每个文件夹中的 n 分之一，1：处理 n 分之一的文件夹

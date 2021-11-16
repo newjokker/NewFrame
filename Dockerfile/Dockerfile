@@ -37,8 +37,10 @@ RUN rm -r /v0.0.1/docker_tmp
 # copy all code to docker
 COPY ./data/v0.0.1 /v0.0.1
 
-RUN python3 script/allflow_wuhan.py
+#RUN python3 script/all_models_flow.py
 
-
+# start container and run the app
+#docker run --gpus 'device=0' -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_dir:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -v /home/ldq/logs:/v0.0.1/logs -it wuhan_ft:v0.0.2 /bin/bash
+#python3 script/allflow_wuhan.py
 
 
