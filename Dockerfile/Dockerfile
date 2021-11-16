@@ -37,7 +37,10 @@ RUN rm -r /v0.0.1/docker_tmp
 # copy all code to docker
 COPY ./data/v0.0.1 /v0.0.1
 
-#RUN python3 script/all_models_flow.py
+# compile the py
+CMD ['python3 /v0.0.1/script/tools/encrypt.py -end /v0.0.1/lib -env /opt/conda/pkgs/python-3.7.7-h191fe78_0_cpython/include/python3.7m -c']
+
+# todo 将编译模型也放在最后做，最后改一下 config 中的加密为 True 就行
 
 # start container and run the app
 #docker run --gpus 'device=0' -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_dir:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -v /home/ldq/logs:/v0.0.1/logs -it wuhan_ft:v0.0.2 /bin/bash
