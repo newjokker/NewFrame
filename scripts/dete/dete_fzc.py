@@ -1,7 +1,5 @@
 # -*- coding: utf-8  -*-
 # -*- author: jokker -*-
-# -*- coding: utf-8  -*-
-# -*- author: jokker -*-
 
 from lib.JoTools.txkjRes.resTools import ResTools
 from lib.JoTools.utils.FileOperationUtil import FileOperationUtil

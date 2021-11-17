@@ -39,17 +39,6 @@ def parse_args():
 
 if __name__ == "__main__":
 
-
-    # todo 不要删除结果，只是将结果 xml 转移到另外一个地方而已 [√]
-
-    # todo 只是实时进行统计有多少 xml，不用一直进行删除等操作 [√]
-
-    # todo 要有办法能实时显示已经跑完了多少数据，这些数据中一共有多少的目标，有多少有目标的图片
-
-    # todo 最后生成的 excel 样式和方天的不一样，一定要重新修改一下 [√]
-
-    # todo 断点继续检测 [√]
-
     # ------------------------------------------------------------------------------------------------------------------
     args = parse_args()
     mul_process_num = args.mul_process_num
@@ -66,6 +55,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------
 
     # todo check and print dete res
+    os.makedirs(res_dir, exist_ok=True)
     start_time = time.time()
     img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
     img_count = len(img_path_list)
