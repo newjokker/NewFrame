@@ -1,5 +1,4 @@
 
-# docker pull pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
 FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
 
 # -y：yes，在命令行交互提示中，直接输入 yes

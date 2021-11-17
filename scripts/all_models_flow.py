@@ -133,81 +133,87 @@ def get_model_list_from_img_name(img_name, M_list):
 def model_dete(img_path, model_dict, model_list):
     """进行模型检测"""
 
-    name = os.path.split(img_path)[1]
-
-    # im
-    im = np.array(Image.open(img_path))
-    data = {"path": img_path, 'name': name, 'im':im}
     dete_res_all = DeteRes()
-    dete_res_all.img_path = img_path
-
     #
-    save_dir = os.path.join(output_dir, "save_res")
-    os.makedirs(save_dir, exist_ok=True)
-    each_save_name = os.path.split(img_path)[1]
-    each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
-    # each_save_path_jpg = os.path.join(save_dir, each_save_name)
+    res_save_dir = os.path.join(output_dir, "save_res")
+    save_error_dir = os.path.join(output_dir, "save_res", "error")
+    os.makedirs(res_save_dir, exist_ok=True)
+    os.makedirs(save_error_dir, exist_ok=True)
+    each_img_name = os.path.split(img_path)[1]
+    each_save_path_xml_normal = os.path.join(res_save_dir, each_img_name[:-4] + '.xml')
+    each_save_path_xml_error = os.path.join(save_error_dir, each_img_name[:-4] + '.xml')
     #
-    if os.path.exists(each_save_path_xml):
+    if os.path.exists(each_save_path_xml_normal):
         print("* ignore img have res already")
         return
-    #
 
-    # todo 下面的逻辑使用一个循环进行维护
+    try:
+        # todo 下面的逻辑使用一个循环进行维护
+        dete_res_all.img_path = img_path
+        name = os.path.split(img_path)[1]
 
-    if "jyzZB" in model_list:
-        jyzZB_dete_res = dete_jyzZB(model_dict, data)
-        if jyzZB_dete_res:
-            dete_res_all += jyzZB_dete_res
+        # im
+        im = np.array(Image.open(img_path))
+        data = {"path": img_path, 'name': name, 'im': im}
 
-    if "nc" in model_list:
-        nc_dete_res = dete_nc(model_dict, data)
-        if nc_dete_res:
-            dete_res_all += nc_dete_res
+        if "jyzZB" in model_list:
+            jyzZB_dete_res = dete_jyzZB(model_dict, data)
+            if jyzZB_dete_res:
+                dete_res_all += jyzZB_dete_res
 
-    if "fzc" in model_list:
-        fzc_dete_res = dete_fzc(model_dict, data)
-        if fzc_dete_res:
-            dete_res_all += fzc_dete_res
+        if "nc" in model_list:
+            nc_dete_res = dete_nc(model_dict, data)
+            if nc_dete_res:
+                dete_res_all += nc_dete_res
 
-    if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
-        kkx_dete_res = dete_kkx(model_dict, data)
-        if kkx_dete_res:
-            dete_res_all += kkx_dete_res
+        if "fzc" in model_list:
+            fzc_dete_res = dete_fzc(model_dict, data)
+            if fzc_dete_res:
+                dete_res_all += fzc_dete_res
 
-    if "jyhQX" in model_list:
-        jyhQX_dete_res = dete_jyhQX(model_dict, data)
-        if jyhQX_dete_res:
-            dete_res_all += jyhQX_dete_res
+        if "kkxTC" in model_list or "kkxQuiting" in model_list or "kkxRust" in model_list:
+            kkx_dete_res = dete_kkx(model_dict, data)
+            if kkx_dete_res:
+                dete_res_all += kkx_dete_res
 
-    if "xjQX" in model_list:
-        xjQX_dete_res = dete_xjQX(model_dict, data)
-        if xjQX_dete_res:
-            dete_res_all += xjQX_dete_res
+        if "jyhQX" in model_list:
+            jyhQX_dete_res = dete_jyhQX(model_dict, data)
+            if jyhQX_dete_res:
+                dete_res_all += jyhQX_dete_res
 
-    # set confidence as 1 when confidence less then 0
-    for each_dete_obj in dete_res_all:
-        if each_dete_obj.conf < 0:
-            each_dete_obj.conf = 1
+        if "xjQX" in model_list:
+            xjQX_dete_res = dete_xjQX(model_dict, data)
+            if xjQX_dete_res:
+                dete_res_all += xjQX_dete_res
 
-    # nms
-    dete_res_all.do_nms(0.3)
+        # set confidence as 1 when confidence less then 0
+        for each_dete_obj in dete_res_all:
+            if each_dete_obj.conf < 0:
+                each_dete_obj.conf = 1
 
-    # filter by tags
-    dete_res_all.filter_by_tags(need_tag=list(tag_code_dict.keys()))
+        # nms
+        dete_res_all.do_nms(0.3)
 
-    # update tags
-    dete_res_all.update_tags(tag_code_dict)
+        # filter by tags
+        dete_res_all.filter_by_tags(need_tag=list(tag_code_dict.keys()))
 
-    # save xml
-    if len(dete_res_all) > 0:
-        dete_res_all.print_as_fzc_format()
-    else:
-        print([])
+        # update tags
+        dete_res_all.update_tags(tag_code_dict)
 
+        # save xml
+        if len(dete_res_all) > 0:
+            dete_res_all.print_as_fzc_format()
+        else:
+            print([])
 
-    # dete_res_all.draw_dete_res(each_save_path_jpg)
-    dete_res_all.save_to_xml(each_save_path_xml)
+        # dete_res_all.draw_dete_res(each_save_path_jpg)
+        dete_res_all.save_to_xml(each_save_path_xml_normal)
+
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_frame.f_globals["__file__"])
+        print(e.__traceback__.tb_lineno)
+        dete_res_all.save_to_xml(each_save_path_xml_error)
 
     # empty cache
     torch.cuda.empty_cache()
@@ -250,8 +256,8 @@ if __name__ == '__main__':
     print("* start warm model ")
     scriptName = os.path.basename(__file__).split('.')[0]
     #
-    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX', 'kkxClearance']
-    # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
+    # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX', 'kkxClearance']
+    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
     # all_model_list = ['xjQX', 'jyhQX']
 
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
@@ -280,23 +286,19 @@ if __name__ == '__main__':
 
             # -------------------------------------
 
-            try:
-                each_model_list = all_model_list
-                try:
-                    each_dete_res = model_dete(each_img_path, all_model_dict, each_model_list)
-                except Exception as e:
-                    print(e)
-                    print(e.__traceback__.tb_frame.f_globals["__file__"])
-                    print(e.__traceback__.tb_lineno)
-                    # move error img to assign dir
-                    # shutil.move(each_img_path, os.path.join(sign_error_dir, os.path.split(each_img_path)[1]))
-                #
-                # if os.path.exists(each_img_path):
-                #     os.remove(each_img_path)
-            except Exception as e:
-                print(e)
-                print(e.__traceback__.tb_frame.f_globals["__file__"])
-                print(e.__traceback__.tb_lineno)
+
+            each_model_list = all_model_list
+            model_dete(each_img_path, all_model_dict, each_model_list)
+
+            # 报错的话在 save_res 文件夹中新建一个 error 文件夹，错误的文件都放在这里面
+
+
+                # move error img to assign dir
+                # shutil.move(each_img_path, os.path.join(sign_error_dir, os.path.split(each_img_path)[1]))
+            #
+            # if os.path.exists(each_img_path):
+            #     os.remove(each_img_path)
+
             #
             print('-'*50)
 
@@ -306,9 +308,6 @@ if __name__ == '__main__':
                 if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
                     os.rmdir(each_img_dir)
         #
-        exit()
-        # print("* wait for 2s")
-        # time.sleep(2)
 
         # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
         end_time = time.time()
@@ -318,6 +317,11 @@ if __name__ == '__main__':
         txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
         with open(txt_path, 'w') as txt_file:
             txt_file.write('done')
+
+        exit()
+        # print("* wait for 2s")
+        # time.sleep(2)
+
 
 
 
