@@ -149,11 +149,11 @@ def all_model_restore(args, scriptName, model_list):
         model_xjQX_1 = XjdectR2cnnDetection(args, "xjQX_ljc", scriptName)
         model_xjQX_1.model_restore()
         #
-        model_xjQX_2 = xjDeeplabDetection(args, "xjQX_deeplab", scriptName)
-        model_xjQX_2.model_restore()
+        #model_xjQX_2 = xjDeeplabDetection(args, "xjQX_deeplab", scriptName)
+        #model_xjQX_2.model_restore()
         #
         model_dict["model_xjQX_1"] = model_xjQX_1
-        model_dict["model_xjQX_2"] = model_xjQX_2
+        #model_dict["model_xjQX_2"] = model_xjQX_2
 
     return model_dict
 

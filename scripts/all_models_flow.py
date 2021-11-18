@@ -223,6 +223,12 @@ def model_dete(img_path, model_dict, model_list):
 
 if __name__ == '__main__':
 
+
+    # todo 要统一解决模型不能在非 0 号 GPU 上运行的问题，因为 yolov5 中已经设置 os.environ["CUDA_VISIBLE_DEVICES"] = str(self.gpuID)
+    #  这样能发现的 GPU 只有一个后续的 VIT 自然使用 torch.cuda.set_device(self.gpuID) 就不能分配到对应的 GPU 上了
+
+
+
     args = parse_args()
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath

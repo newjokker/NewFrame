@@ -21,6 +21,9 @@ import copy
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 
+# r2cnnPytorchDetection.py 是有问题的，当输入的图片比较大会导致占用内存突然变大，r2cnn 的速度也很慢
+
+
 @DecoratorUtil.time_this
 def dete_xjQX(model_dict, data):
     try:

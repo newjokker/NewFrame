@@ -71,7 +71,6 @@ class R2cnnDetection(detection):
         cfg.MODEL.RETINANET.NUM_CLASSES = self.cf.getint(self.objName, 'num_class')
         cfg.MODEL.ROI_BOX_HEAD.NUM_CLASSES = self.cf.getint(self.objName, 'num_class')
 
-
     @try_except()
     def setCfg(self):
         self.log.info(self.gpuID)
@@ -256,7 +255,6 @@ class R2cnnDetection(detection):
         dete_res.file_name = image_name
         if image is None:
             image = dete_res.get_img_array()
-
 
         predictions = self.compute_prediction(image)
         predictions = self.select_top_predictions(predictions)
@@ -509,7 +507,13 @@ class R2cnnDetection(detection):
         rect = list(map(int, rect))
         return rect
 
+# ----------------------------------------------------------------------------------------------------------------------
 
-    
+def check_assign_gpu_info(assign_gpu_id=0):
+    pynvml.nvmlInit()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(assign_gpu_id)
+    meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
+    print(meminfo.used)
+
 def delete_scrfile(srcfile_path):
     os.remove(srcfile_path)
