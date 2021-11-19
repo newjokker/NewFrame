@@ -51,6 +51,7 @@ def parse_args():
     #
     parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")
     parser.add_argument('--deteMode', dest='deteMode',type=int, default=0)            # 0 : 处理每个文件夹中的 n 分之一，1：处理 n 分之一的文件夹
+    parser.add_argument('--model_list', dest='model_list',type=str, default='')
     #
     parser.add_argument('--gpuID', dest='gpuID', type=int, default=0)
     parser.add_argument('--port', dest='port', type=int, default=45452)
@@ -227,8 +228,6 @@ if __name__ == '__main__':
     # todo 要统一解决模型不能在非 0 号 GPU 上运行的问题，因为 yolov5 中已经设置 os.environ["CUDA_VISIBLE_DEVICES"] = str(self.gpuID)
     #  这样能发现的 GPU 只有一个后续的 VIT 自然使用 torch.cuda.set_device(self.gpuID) 就不能分配到对应的 GPU 上了
 
-
-
     args = parse_args()
     img_dir = args.imgDir.strip()
     json_path = args.jsonPath
@@ -243,6 +242,14 @@ if __name__ == '__main__':
     #
     script_num, script_index = args.scriptIndex.strip().split('-')
     script_num, script_index = int(script_num), int(script_index)
+    #
+    model_list_str = args.model_list
+    model_list = model_list_str.strip().split(',')
+    if len(model_list) > 0:
+        all_model_list = model_list
+    else:
+        all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'kkxClearance']
+
     # ---------------------------
     print('-' * 50)
     print("* {0} : {1}".format("img_dir", img_dir))
@@ -250,6 +257,7 @@ if __name__ == '__main__':
     print("* {0} : {1}".format("log_path", log_path))
     print("* {0} : {1}".format("csv_path", csv_path))
     print("* {0} : {1}".format("dete_eror_dir", sign_error_dir))
+    print("* {0} : {1}".format("model_list", ", ".join(all_model_list)))
     print("* script_num-script_index : {0}-{1}".format(script_num, script_index))
     print('-' * 50)
 
@@ -262,10 +270,6 @@ if __name__ == '__main__':
     print("* start warm model ")
     scriptName = os.path.basename(__file__).split('.')[0]
     #
-    # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX', 'kkxClearance']
-    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'kkxClearance']
-    # all_model_list = ['xjQX', 'jyhQX']
-
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
     print("* warm model success ")
 
@@ -291,21 +295,8 @@ if __name__ == '__main__':
                 print("* {0} : {1}".format(dete_img_index, each_img_path))
 
             # -------------------------------------
-
-
             each_model_list = all_model_list
             model_dete(each_img_path, all_model_dict, each_model_list)
-
-            # 报错的话在 save_res 文件夹中新建一个 error 文件夹，错误的文件都放在这里面
-
-
-                # move error img to assign dir
-                # shutil.move(each_img_path, os.path.join(sign_error_dir, os.path.split(each_img_path)[1]))
-            #
-            # if os.path.exists(each_img_path):
-            #     os.remove(each_img_path)
-
-            #
             print('-'*50)
 
         # when dete finished , delete the img dir
