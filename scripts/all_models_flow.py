@@ -263,7 +263,7 @@ if __name__ == '__main__':
     scriptName = os.path.basename(__file__).split('.')[0]
     #
     # all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'xjQX', 'jyhQX', 'kkxClearance']
-    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting']
+    all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'kkxClearance']
     # all_model_list = ['xjQX', 'jyhQX']
 
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
