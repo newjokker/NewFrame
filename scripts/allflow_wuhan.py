@@ -58,9 +58,9 @@ if __name__ == "__main__":
     else:
         print("* dete model include : {0}".format(', '.join(model_list)))
 
-
     for i in range(1, mul_process_num + 1):
-        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2} --gpuID {3}".format(mul_process_num, i, dete_mode, gpu_id_list[(i-1)%gpu_num])
+        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2} --gpuID {3} --model_list {4}".format(
+            mul_process_num, i, dete_mode, gpu_id_list[(i-1)%gpu_num], ','.join(model_list))
 
         each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
         each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
