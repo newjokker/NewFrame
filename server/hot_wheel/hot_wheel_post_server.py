@@ -1,46 +1,61 @@
 # -*- coding: utf-8  -*-
 # -*- author: jokker -*-
 
-
 import os
 import time
+import argparse
 import requests
 from multiprocessing import Pool
 from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
 
 
-def post_img(each_img_path, is_end='False'):
-    # global post_img_num
-    # post_img_num += 1
-    url = r"http://192.168.3.74:3232/receive_server/post_img/{0}".format(is_end)
-    res = requests.post(url=url, data={'filename': os.path.split(each_img_path)[1]}, files={'image': open(each_img_path, 'rb')})
-    # print("{0} : {1}".format(post_img_num, res.text.strip()))
+def parse_args():
+    parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
+    parser.add_argument('--port', dest='port', type=int, default=3232)
+    parser.add_argument('--host', dest='host', type=str, default='192.168.3.74')  # 这边要是写 127 的话只能在本服务器访问了，要改为本机的地址
+    #
+    parser.add_argument('--xml_dir', dest='xml_dir', type=str, default='/')
+    parser.add_argument('--post_mode', dest='post_mode', type=str, default=0)
+    #
+    args = parser.parse_args()
+    return args
 
-def post_dete_res(each_img_path, is_end='False'):
-    # global post_img_num
-    # post_img_num += 1
-    url = r"http://192.168.3.74:3232/receive_server/post_img/{0}".format(is_end)
-    res = requests.post(url=url, data={'filename': os.path.split(each_img_path)[1]}, files={'image': open(each_img_path, 'rb')})
-    # print("{0} : {1}".format(post_img_num, res.text.strip()))
+
+def post_dete_res(assign_dete_res):
+    """推送结果"""
+    url = r"http://{0}:{1}/sendResult".format(host, port)
+    data = []
+    for each_dete_res in assign_dete_res:
+        data.append({
+            "file_name": each_dete_res.file_name,
+            # "result": each_dete_res.get_fzc_format(),
+            "result": each_dete_res.get_result_construction(),
+            "p_id": each_dete_res.p_id
+        })
+    res = requests.post(url=url, data=data)
+    print(res)
 
 
 if __name__ == "__main__":
 
-    start_time = time.time()
+    args = parse_args()
+    host = args.host
+    port = args.port
+    xml_dir = args.xml_dir
+    post_mode = args.post_mode
 
-    # post_img_num = 0
-    # img_dir = r"/home/ldq/fangtian_test/fangtian_nc_kkx"
-    img_dir = r"D:\AppData\baiduwangpan\lyy\pic"
-    img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))[:500]
-    img_path_end = img_path_list[-1]
-    img_path_list = img_path_list[:-1]
+    while True:
+        dete_res_all = []
+        for each_xml_path in FileOperationUtil.re_all_file(xml_dir, endswitch=['.xml']):
+            each_dete_res = DeteRes(xml_path=each_xml_path)
+            each_dete_res.file_name = FileOperationUtil.bang_path(each_xml_path)[1]
+            each_dete_res.p_id = -1
+            dete_res_all.append(each_dete_res)
+            # remove
+            os.remove(each_xml_path)
+        # post
+        post_dete_res(dete_res_all)
+        time.sleep(20)
 
-    pool = Pool()
-    pool.map(post_img, img_path_list)
-    pool.close()
-    pool.join()
 
-    print("use time : {0}".format(time.time() - start_time))
-
-    post_img(img_path_end, is_end=True)

@@ -12,3 +12,10 @@
     * --rm : 退出之后删除容器
 
 * docker run --gpus device=0 -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/ou_dir:/usr/output_dir -itd wuhan_ft:v2.1.3 /v0.0.1/start_server.sh
+
+* 使用指定参数
+* docker run --gpus device=0 -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_test:/usr/output_dir -e mul_process_num=2 -e gpu_id_list=0 -e model_list=nc,jyzZB,fzc,fzcRust,kkxTC,kkxQuiting,kkxClearance -it  test:v2 /v0.0.1/start_server.sh
+
+
+
+
