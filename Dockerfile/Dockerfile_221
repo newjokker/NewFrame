@@ -4,7 +4,7 @@ FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
 # -y：yes，在命令行交互提示中，直接输入 yes
 RUN apt-get update && apt-get install vim -y && apt-get install libglib2.0-0 -y && apt install libgl1-mesa-glx -y && apt-get install gcc -y
 
-# create dictory and se as work dictory
+# create dictory and set as work dictory
 RUN mkdir /v0.0.1 && mkdir /v0.0.1/docker_tmp
 WORKDIR /v0.0.1
 COPY ./data/JoUtil-0.2.12.9-py3-none-any.whl /v0.0.1/docker_tmp
@@ -24,7 +24,7 @@ RUN pip install -i https://pypi.douban.com/simple \
     opencv-python\
     /v0.0.1/docker_tmp/JoUtil-0.2.12.9-py3-none-any.whl
 
-# update files in toech environment
+# update files in torch environment
 RUN rm  /opt/conda/lib/python3.7/site-packages/torch/nn/init.py \
         /opt/conda/lib/python3.7/site-packages/torch/nn/modules/activation.py
 

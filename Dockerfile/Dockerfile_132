@@ -1,0 +1,47 @@
+
+# python 3.8.8 | torch 1.8.1 | torchvision 0.9.1
+FROM pytorch/pytorch:1.8.1-cuda11.1-cudnn8-runtime
+
+# -y：yes，在命令行交互提示中，直接输入 yes
+RUN apt-get update && apt-get install vim -y && apt-get install libglib2.0-0 -y && apt install libgl1-mesa-glx -y && apt-get install gcc -y
+
+# create dictory and set as work dictory
+RUN mkdir /v0.0.1 && mkdir /v0.0.1/docker_tmp
+WORKDIR /v0.0.1
+COPY ./data/JoUtil-0.2.12.9-py3-none-any.whl /v0.0.1/docker_tmp
+
+# install python package
+RUN pip install -i https://pypi.douban.com/simple \
+    flask\
+    shapely\
+    pycryptodome\
+    Cython\
+    matplotlib\
+    pandas\
+    seaborn\
+    sklearn\
+    yacs\
+    # tensorflow-gpu==1.15.0\   # todo 先不管了，后面线夹倾斜 均压环倾斜 等用到 tenssorflow 的要进行重写
+    opencv-python\
+    /v0.0.1/docker_tmp/JoUtil-0.2.12.9-py3-none-any.whl
+
+# insert line, check the inference
+RUN sed -i "268i \            self.score_thresh = 0.1 if not hasattr(self, 'score_thresh') else self.score_thresh" \
+    /opt/conda/lib/python3.8/site-packages/JoTools/../torchvision/models/detection/rpn.py
+
+# remove temp file
+RUN rm -r /v0.0.1/docker_tmp
+
+# copy all code to docker
+COPY ./data/v0.0.1 /v0.0.1
+
+
+# todo 测试金具锈蚀 v1.1.1.0 UNet 网络运行的问题 | 测试了没有问题
+
+# todo r2cnn 编译一下，python 3.8.8
+
+#
+
+
+
+
