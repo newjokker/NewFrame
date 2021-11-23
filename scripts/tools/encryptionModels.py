@@ -5,17 +5,14 @@ from Crypto.Cipher import AES
 import random, struct
 import configparser
 import argparse
-
-"""
-* 加密和解密都是使用的第三方的方法，过程比较简单，目前没有优化的必要
-"""
-
-# todo 现在模型加密之后要想使用必须先解密，所以要是想获取模型数据直接在模型运行的时候拷贝解密的模型就行，有一个方案就是将解密的文件夹放在 python 的临时文件夹里面，这样使用完之后直接删掉
+import sys
 
 def args_parse():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-op", "--operation", type=str, default='en', choices=['en', 'de', 'csrc', 'cdst'], help="encrypt, decrypt, clear src models or clear dst models")
-    args = ap.parse_args() 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_dir', dest='model_dir', type=str, default='./')
+    parser.add_argument('--model_name', dest='model_name', type=str)
+    parser.add_argument('--suffix', dest='suffix', type=str, default='.pth')
+    args = ap.parse_args()
     return args
 
 def encrypt_file(key, in_filename, out_filename=None, chunksize=64*1024):
@@ -229,43 +226,15 @@ def main(bgl_dir, project_list, use_operation):
 
 if __name__ == "__main__":
 
-    # 实例
-    # python3 encryptionModels.py -op cdst  ，删除加密的模型信息
-    # python3 encryptionModels.py -op csrc  ，删除未加密的模型信息
-    # python3 encryptionModels.py -op en    ，加密模型
-    # python3 encryptionModels.py -op de    ，解密模型
-
 
     salt = 'txkj2019'
     bkey32 = "{: <32}".format(salt).encode("utf-8")
 
-    # args = args_parse()
-    #
-    # operations = {
-    #     'en':  single_project_models_encrypt,       # 加密单个模型
-    #     'de': single_project_models_decrypt,        # 解密单个模型
-    #     'csrc': single_project_srcmodels_clear,     # 删除未加密的模型文件
-    #     'cdst': single_project_dstmodels_clear,     # 删除加密的模型文件
-    # }
-    # op_name = {
-    #     'en': 'encrypt',
-    #     'de': 'decrypt',
-    #     'csrc': 'clear src',
-    #     'cdst': 'clear dst',
-    # }
-    # operation = operations[args.operation]
-    #
-    # #修改点1：工程文件夹路径
-    # BGL_dir = '/root/BGL-Release/BGL-platform/testdir/modeldata'
-    #
-    # #修改点2：需要加密的工程
-    # project_name_list = ['kkxTC']
-    #
-    # main(BGL_dir, project_name_list, operation)
+    args = args_parse()
 
-    model_dir = r""
-    model_name = ""
-    ext = ""
+    model_dir = args.model_dir
+    model_name = args.model_name
+    sufix = args.suffix
     single_model_encrypt(model_dir, model_name, ext)
 
 

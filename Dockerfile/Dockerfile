@@ -1,5 +1,6 @@
 
-FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
+# python 3.6.9 | torch 1.8.1 | torchvision 0.9.1
+FROM pytorch/pytorch:1.8.1-cuda11.1-cudnn8-runtime
 
 # -y：yes，在命令行交互提示中，直接输入 yes
 RUN apt-get update && apt-get install vim -y && apt-get install libglib2.0-0 -y && apt install libgl1-mesa-glx -y && apt-get install gcc -y
@@ -24,29 +25,13 @@ RUN pip install -i https://pypi.douban.com/simple \
     opencv-python\
     /v0.0.1/docker_tmp/JoUtil-0.2.12.9-py3-none-any.whl
 
-# update files in toech environment
-RUN rm  /opt/conda/lib/python3.7/site-packages/torch/nn/init.py \
-        /opt/conda/lib/python3.7/site-packages/torch/nn/modules/activation.py
-
-COPY ./data/init.py /opt/conda/lib/python3.7/site-packages/torch/nn
-COPY ./data/activation.py /opt/conda/lib/python3.7/site-packages/torch/nn/modules
-
 # remove temp file
 RUN rm -r /v0.0.1/docker_tmp
 
 # copy all code to docker
 COPY ./data/v0.0.1 /v0.0.1
 
-# compile the py
-RUN python3 /v0.0.1/scripts/tools/encrypt.py -end /v0.0.1/lib/detect_libs/,/v0.0.1/lib/JoTools/,/v0.0.1/lib/detect_utils/,/v0.0.1/scripts/dete/ -env /opt/conda/pkgs/python-3.7.7-h191fe78_0_cpython/include/python3.7m -c
 
-# todo 将编译模型也放在最后做，最后改一下 config 中的加密为 True 就行
-
-# start container and run the app
-#docker run --gpus 'device=0' -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_dir:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -v /home/ldq/logs:/v0.0.1/logs -it wuhan_ft:v0.0.2 /bin/bash
-#python3 script/allflow_wuhan.py
-
-# run startServer.sh at the end
-#CMD ["/v0.0.1/startServe.sh"]
+# model 最后一起加密
 
 
