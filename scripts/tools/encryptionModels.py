@@ -12,7 +12,7 @@ def args_parse():
     parser.add_argument('--model_dir', dest='model_dir', type=str, default='./')
     parser.add_argument('--model_name', dest='model_name', type=str)
     parser.add_argument('--suffix', dest='suffix', type=str, default='.pth')
-    args = ap.parse_args()
+    args = parser.parse_args()
     return args
 
 def encrypt_file(key, in_filename, out_filename=None, chunksize=64*1024):
@@ -234,8 +234,8 @@ if __name__ == "__main__":
 
     model_dir = args.model_dir
     model_name = args.model_name
-    sufix = args.suffix
-    single_model_encrypt(model_dir, model_name, ext)
+    suffix = args.suffix
+    single_model_encrypt(model_dir, model_name, suffix)
 
 
 
