@@ -5,7 +5,14 @@
 
 #### 起服务
 
-* docker run --gpus 'device=0' -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/sign:/v0.0.1/sign -v /home/ldq/output_dir:/usr/output_dir  -it wuhan_ft:v0.0.0 /bin/bash 
+* docker run --gpus 'device=0' 
+    -v /home/ldq/input_dir:/usr/input_picture 
+    -v /home/ldq/sign:/v0.0.1/sign 
+    -v /home/ldq/output_dir:/usr/output_dir
+    -e mul_process_num=2
+    -e gpu_id_list=0,1,2,3,4
+    -e model_list=fzc,nc,jyzZB,kkxTC
+    -it wuhan_ft:v0.0.0 /bin/bash 
 
  [comment]: <> ( * python3 hot_wheel_log_server.py --host 127.0.0.1 --port 8802 --img_dir /home/ldq/input_dir --xml_dir /home/ldq/output_dir/save_res )
 
@@ -38,4 +45,5 @@
         * file_name : str
         * result : dict
         * p_id : int
+
 

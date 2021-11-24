@@ -143,6 +143,7 @@ def model_dete(img_path, model_dict, model_list):
     each_img_name = os.path.split(img_path)[1]
     each_save_path_xml_normal = os.path.join(res_save_dir, each_img_name[:-4] + '.xml')
     each_save_path_xml_error = os.path.join(save_error_dir, each_img_name[:-4] + '.xml')
+    each_save_path_jpg = os.path.join(res_save_dir, each_img_name)
     #
     if os.path.exists(each_save_path_xml_normal):
         print("* ignore img have res already")
