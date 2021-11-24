@@ -52,6 +52,8 @@ def parse_args():
     parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")
     parser.add_argument('--deteMode', dest='deteMode',type=int, default=0)            # 0 : 处理每个文件夹中的 n 分之一，1：处理 n 分之一的文件夹
     parser.add_argument('--model_list', dest='model_list',type=str, default='')
+    parser.add_argument('--keep_alive', dest='keep_alive',type=bool, default=False)
+    parser.add_argument('--ignore_history', dest='ignore_history',type=bool, default=True)
     #
     parser.add_argument('--gpuID', dest='gpuID', type=int, default=0)
     parser.add_argument('--port', dest='port', type=int, default=45452)
@@ -145,9 +147,6 @@ def model_dete(img_path, model_dict, model_list):
     each_save_path_xml_error = os.path.join(save_error_dir, each_img_name[:-4] + '.xml')
     each_save_path_jpg = os.path.join(res_save_dir, each_img_name)
     #
-    if os.path.exists(each_save_path_xml_normal):
-        print("* ignore img have res already")
-        return
 
     try:
         # todo 下面的逻辑使用一个循环进行维护
@@ -234,6 +233,8 @@ if __name__ == '__main__':
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
     sign_dir = args.signDir.strip()
+    keep_alive = args.keep_alive
+    ignore_history = args.ignore_history
     dete_mode = args.deteMode
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
@@ -289,7 +290,7 @@ if __name__ == '__main__':
             each_save_name = os.path.split(each_img_path)[1]
             each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')
             #
-            if os.path.exists(each_save_path_xml):
+            if os.path.exists(each_save_path_xml) and ignore_history:
                 print("* ignore img have res already : {0}".format(each_save_path_xml))
                 continue
             else:
@@ -300,6 +301,9 @@ if __name__ == '__main__':
             model_dete(each_img_path, all_model_dict, each_model_list)
             print('-'*50)
 
+            # delete img path
+            os.remove(each_img_path)
+
         # when dete finished , delete the img dir
         if each_img_dir is not None:
             if os.path.exists(each_img_dir):
@@ -307,18 +311,19 @@ if __name__ == '__main__':
                     os.rmdir(each_img_dir)
         #
 
-        # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
-        end_time = time.time()
-        # add file to output_dir
-        res_txt = os.path.join(sign_dir, "res_txt")
-        os.makedirs(res_txt, exist_ok=True)
-        txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
-        with open(txt_path, 'w') as txt_file:
-            txt_file.write('done')
+        # # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
+        # end_time = time.time()
+        # # add file to output_dir
+        # res_txt = os.path.join(sign_dir, "res_txt")
+        # os.makedirs(res_txt, exist_ok=True)
+        # txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
+        # with open(txt_path, 'w') as txt_file:
+        #     txt_file.write('done')
 
-        exit()
-        # print("* wait for 2s")
-        # time.sleep(2)
+        if keep_alive:
+            time.sleep(1)
+        else:
+            exit()
 
 
 

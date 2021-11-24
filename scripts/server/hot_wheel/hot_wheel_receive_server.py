@@ -89,8 +89,8 @@ def parse_args():
     parser.add_argument('--port', dest='port', type=int, default=3232)
     parser.add_argument('--host', dest='host', type=str, default='0.0.0.0')
     #
-    parser.add_argument('--img_dir', dest='img_dir', type=str, default='/temp')
-    parser.add_argument('--sign_dir', dest='sign_dir', type=str, default='/temp')
+    parser.add_argument('--img_dir', dest='img_dir', type=str, default='/usr/input_picture')
+    parser.add_argument('--sign_dir', dest='sign_dir', type=str, default='/v0.0.1/sign')
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=20)
     #
     args = parser.parse_args()

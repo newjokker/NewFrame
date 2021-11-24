@@ -32,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
     parser.add_argument('--mul_process_num', dest='mul_process_num', type=int, default=2)
     parser.add_argument('--gpu_id_list', dest='gpu_id_list', type=str, default='0')
-    parser.add_argument('--dete_mode', dest='dete_mode', type=int, default=0)
+    parser.add_argument('--dete_mode', dest='dete_mode', type=int, default=1)
     parser.add_argument('--model_list', dest='model_list', type=str, default='')
     #
     args = parser.parse_args()
@@ -51,8 +51,8 @@ def start_receive_server(config_path):
         receive_cmd_str = r"python3 scripts/server/hot_wheel/hot_wheel_receive_server.py --host {0} --port {1} --img_dir {2} --batch_size {3}".format(
             receive_host, receive_port, receive_img_dir, receive_batch_size)
         print(receive_cmd_str)
-        each_bug_file = open(os.path.join("./logs", "bug_receive_{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
-        each_std_file = open(os.path.join("./logs", "std_receive_{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
+        each_bug_file = open(os.path.join("./logs", "bug_receive_" + time_str + obj_name + ".txt"), "w+")
+        each_std_file = open(os.path.join("./logs", "std_receive_" + time_str + obj_name + ".txt"), "w+")
         receive_pid = subprocess.Popen(receive_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)
         return receive_pid
     else:
@@ -71,8 +71,8 @@ def start_post_server(config_path):
         post_cmd_str = r"python3 scripts/server/hot_wheel/hot_wheel_post_server.py --host {0} --port {1} --xml_dir {2} --post_mode {3}".format(
             post_host, post_port, post_xml_dir, post_mode)
         print(post_cmd_str)
-        each_bug_file = open(os.path.join("./logs", "bug_post_{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
-        each_std_file = open(os.path.join("./logs", "std_post_{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
+        each_bug_file = open(os.path.join("./logs", "bug_post_" + time_str + obj_name + ".txt"), "w+")
+        each_std_file = open(os.path.join("./logs", "std_post_" + time_str + obj_name + ".txt"), "w+")
         post_pid = subprocess.Popen(post_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)
         return post_pid
     else:
@@ -107,8 +107,8 @@ if __name__ == "__main__":
 
     # start dete servre
     for i in range(1, mul_process_num + 1):
-        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2} --gpuID {3} --model_list {4}".format(
-            mul_process_num, i, dete_mode, gpu_id_list[(i-1)%gpu_num], ','.join(model_list))
+        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2} --gpuID {3} --model_list {4} --keep_alive {5} --ignore_history {6}".format(
+            mul_process_num, i, dete_mode, gpu_id_list[(i-1)%gpu_num], ','.join(model_list), 'True', 'False')
 
         each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
         each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
@@ -118,33 +118,9 @@ if __name__ == "__main__":
         print("* {0}".format(each_cmd_str))
         time.sleep(1)
 
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # todo check and print dete res
-    os.makedirs(res_dir, exist_ok=True)
-    start_time = time.time()
-    img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-    img_count = len(img_path_list)
-
     while True:
-        res_xml_list = list(FileOperationUtil.re_all_file(res_dir, endswitch=['.xml']))
-        xml_count = len(res_xml_list)
-        if xml_count >= img_count:
-            print("* detection finished")
-            break
-        else:
-            use_time = time.time()-start_time
-            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
-            time.sleep(60)
+        time.sleep(1)
 
-    # ------------------------------------------------------------------------------------------------------------------
-    print("* xml to csv")
-    xml_to_csv(res_dir, csv_path)
-    print("* xml to csv success ")
-
-    use_time_all = time.time() - start_time
-    print("* dete use time : {0} ,  {1}s/pic".format(use_time_all, use_time_all/img_count))
 
 
 
