@@ -6,6 +6,7 @@
 #### 起服务
 
 * docker run --gpus 'device=0' 
+    -p 1122:1122                                            # 接受服务的端口号
     -v /home/ldq/input_dir:/usr/input_picture 
     -v /home/ldq/sign:/v0.0.1/sign 
     -v /home/ldq/output_dir:/usr/output_dir

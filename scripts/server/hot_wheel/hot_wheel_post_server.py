@@ -27,12 +27,14 @@ def post_dete_res(assign_dete_res):
     url = r"http://{0}:{1}/sendResult".format(host, port)
     data = []
     for each_dete_res in assign_dete_res:
-        data.append({
-            "file_name": each_dete_res.file_name,
-            # "result": each_dete_res.get_fzc_format(),
-            "result": each_dete_res.get_result_construction(),
-            "p_id": each_dete_res.p_id
-        })
+        #data.append({
+        #    "file_name": each_dete_res.file_name,
+        #    # "result": each_dete_res.get_fzc_format(),
+        #    "result": each_dete_res.get_result_construction(),
+        #    "p_id": each_dete_res.p_id
+        #})
+
+        data.append((each_dete_res.get_result_construction()))
     res = requests.post(url=url, data=data)
     print(res)
 
@@ -48,10 +50,13 @@ if __name__ == "__main__":
     while True:
         dete_res_all = []
         for each_xml_path in FileOperationUtil.re_all_file(xml_dir, endswitch=['.xml']):
-            each_dete_res = DeteRes(xml_path=each_xml_path)
-            each_dete_res.file_name = FileOperationUtil.bang_path(each_xml_path)[1]
-            each_dete_res.p_id = -1
-            dete_res_all.append(each_dete_res)
+            try:
+                each_dete_res = DeteRes(xml_path=each_xml_path)
+                each_dete_res.file_name = FileOperationUtil.bang_path(each_xml_path)[1]
+                each_dete_res.p_id = -1
+                dete_res_all.append(each_dete_res)
+            except Exception as e:
+                print(e)
             # remove
             os.remove(each_xml_path)
         # post

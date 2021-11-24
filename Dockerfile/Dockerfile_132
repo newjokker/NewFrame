@@ -21,6 +21,8 @@ RUN pip install -i https://pypi.douban.com/simple \
     seaborn\
     sklearn\
     yacs\
+    prettytable\
+    gevent\
     # tensorflow-gpu==1.15.0\   # todo 先不管了，后面线夹倾斜 均压环倾斜 等用到 tenssorflow 的要进行重写
     opencv-python\
     /v0.0.1/docker_tmp/JoUtil-0.2.12.9-py3-none-any.whl
