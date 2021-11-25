@@ -27,9 +27,9 @@ from lib.JoTools.utils.DecoratorUtil import DecoratorUtil
 # load model dete script
 from dete import dete_nc, dete_fzc, dete_kkx, dete_xjQX, dete_jyhQX, dete_jyzZB, all_model_restore
 
+
 # ------------------ del -----------------------------------------
-# todo status
-cpu_num = 1                                                 # 这里设置成你想运行的CPU个数
+cpu_num = 1                                                                 # 这里设置成你想运行的CPU个数
 os.environ ['OMP_NUM_THREADS'] = str(cpu_num)
 os.environ ['OPENBLAS_NUM_THREADS'] = str(cpu_num)
 os.environ ['MKL_NUM_THREADS'] = str(cpu_num)
@@ -290,14 +290,11 @@ if __name__ == '__main__':
             #
             if os.path.exists(each_save_path_xml) and ignore_history:
                 print("* ignore img have res already : {0}".format(each_save_path_xml))
-                continue
             else:
                 print("* {0} : {1}".format(dete_img_index, each_img_path))
-
-            # -------------------------------------
-            each_model_list = all_model_list
-            model_dete(each_img_path, all_model_dict, each_model_list)
-            print('-'*50)
+                each_model_list = all_model_list
+                model_dete(each_img_path, all_model_dict, each_model_list)
+                print('-' * 50)
 
             # delete img path
             if del_dete_img:

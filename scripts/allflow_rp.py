@@ -32,7 +32,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
     parser.add_argument('--mul_process_num', dest='mul_process_num', type=int, default=2)
     parser.add_argument('--gpu_id_list', dest='gpu_id_list', type=str, default='0')
-    parser.add_argument('--dete_mode', dest='dete_mode', type=int, default=1)
     parser.add_argument('--model_list', dest='model_list', type=str, default='')
     #
     args = parser.parse_args()
@@ -84,7 +83,6 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------
     args = parse_args()
     mul_process_num = args.mul_process_num
-    dete_mode = args.dete_mode
     model_list_str = args.model_list
     model_list = model_list_str.strip().split(',')
     gpu_id_list_str = args.gpu_id_list
@@ -107,8 +105,8 @@ if __name__ == "__main__":
 
     # start dete servre
     for i in range(1, mul_process_num + 1):
-        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --deteMode {2} --gpuID {3} --model_list {4} --keep_alive {5} --ignore_history {6}".format(
-            mul_process_num, i, dete_mode, gpu_id_list[(i-1)%gpu_num], ','.join(model_list), 'True', 'False')
+        each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --gpuID {2} --model_list {3} --ignore_history {4} --del_dete_img {5}".format(
+            mul_process_num, i, gpu_id_list[(i-1)%gpu_num], ','.join(model_list), 'False', 'True')
 
         each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
         each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
