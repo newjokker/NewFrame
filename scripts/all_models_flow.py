@@ -12,15 +12,14 @@ import cv2
 import shutil
 import json
 import torch
-import numpy as np
-import threading
-from PIL import Image
 import uuid
 import time
 import copy
+import numpy as np
+import threading
+from PIL import Image
 #
 from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
-# time analysis
 from lib.JoTools.utils.FileOperationUtil import FileOperationUtil
 from lib.JoTools.txkjRes.deteRes import DeteRes
 from lib.JoTools.txkjRes.deteObj import DeteObj
@@ -47,13 +46,13 @@ def parse_args():
     parser.add_argument('--modelList', dest='modelList', default="M1,M2,M3,M4,M5,M6,M7,M8,M9")
     parser.add_argument('--jsonPath', dest='jsonPath', default=r"/usr/input_picture_attach/pictureName.json")
     parser.add_argument('--outputDir', dest='outputDir', default=r"/usr/output_dir")
-    parser.add_argument('--signDir', dest='signDir', default=r"/v0.0.1/sign")
+    parser.add_argument('--signDir', dest='signDir', default=r"./sign")
     #
     parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")
-    parser.add_argument('--deteMode', dest='deteMode',type=int, default=0)            # 0 : 处理每个文件夹中的 n 分之一，1：处理 n 分之一的文件夹
     parser.add_argument('--model_list', dest='model_list',type=str, default='')
-    parser.add_argument('--keep_alive', dest='keep_alive',type=bool, default=False)
-    parser.add_argument('--ignore_history', dest='ignore_history',type=bool, default=True)
+    parser.add_argument('--ignore_history', dest='ignore_history',type=str, default='True')
+    parser.add_argument('--assign_img_dir', dest='assign_img_dir',type=str, default=None)
+    parser.add_argument('--del_dete_img', dest='del_dete_img',type=str, default='False')
     #
     parser.add_argument('--gpuID', dest='gpuID', type=int, default=0)
     parser.add_argument('--port', dest='port', type=int, default=45452)
@@ -73,7 +72,7 @@ def get_json_dict(json_path):
         img_name_json_dict[each["fileName"]] = each["originFileName"]
     return img_name_json_dict
 
-def get_img_path_list_from_sign_dir(sign_txt_path, img_dir, dete_mode):
+def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
     """从 sign_dir 中读取需要处理的文件"""
 
     if not os.path.exists(sign_txt_path):
@@ -86,26 +85,12 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir, dete_mode):
             each_img_dir = os.path.join(img_dir, each_line.strip())
             img_dir_list.append(each_img_dir)
     #
-    if dete_mode == 1:
-        for each_index in range(script_index - 1, len(img_dir_list), script_num):
-            each_img_dir = img_dir_list[each_index]
-            if os.path.exists(each_img_dir):
-                img_path_list = list(
-                    FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-                if len(img_path_list) != 0:
-                    return img_path_list, each_img_dir
-    elif dete_mode == 0:
-        for each_img_dir in img_dir_list:
-            if os.path.exists(each_img_dir):
-                res_list = []
-                img_path_list = list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-                for each_img_index in range(script_index -1 , len(img_path_list), script_num):
-                    res_list.append(img_path_list[each_img_index])
-                #
-                if len(res_list) != 0:
-                    return res_list, each_img_dir
-    else:
-        raise ValueError("error : dete mode can only in [0, 1]")
+    for each_index in range(script_index - 1, len(img_dir_list), script_num):
+        each_img_dir = img_dir_list[each_index]
+        if os.path.exists(each_img_dir):
+            img_path_list = list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+            if len(img_path_list) != 0:
+                return img_path_list, each_img_dir
     return [], None
 
 def get_model_list_from_img_name(img_name, M_list):
@@ -230,12 +215,12 @@ if __name__ == '__main__':
 
     args = parse_args()
     img_dir = args.imgDir.strip()
+    assign_img_dir = args.assign_img_dir                                                        # 跑指定的文件夹
     json_path = args.jsonPath
     output_dir = args.outputDir.strip()
     sign_dir = args.signDir.strip()
-    keep_alive = args.keep_alive
-    ignore_history = args.ignore_history
-    dete_mode = args.deteMode
+    ignore_history = eval(args.ignore_history)
+    del_dete_img = eval(args.del_dete_img)
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
     sign_txt_path = os.path.join(sign_dir, "img_dir_to_dete.txt")
@@ -250,8 +235,7 @@ if __name__ == '__main__':
     if len(model_list) > 0:
         all_model_list = model_list
     else:
-        all_model_list = ['nc', 'jyzZB', 'fzc', 'fzcRust', 'kkxTC', 'kkxQuiting', 'kkxClearance']
-
+        raise ValueError("model list is empty")
     # ---------------------------
     print('-' * 50)
     print("* {0} : {1}".format("img_dir", img_dir))
@@ -260,6 +244,8 @@ if __name__ == '__main__':
     print("* {0} : {1}".format("csv_path", csv_path))
     print("* {0} : {1}".format("dete_eror_dir", sign_error_dir))
     print("* {0} : {1}".format("model_list", ", ".join(all_model_list)))
+    print("* {0} : {1}".format("ignore_history", ignore_history))
+    print("* {0} : {1}".format("del_dete_img", del_dete_img))
     print("* script_num-script_index : {0}-{1}".format(script_num, script_index))
     print('-' * 50)
 
@@ -275,12 +261,15 @@ if __name__ == '__main__':
     all_model_dict = all_model_restore(args, scriptName, all_model_list)
     print("* warm model success ")
 
-    start_time = time.time()
-
     #
     while True:
-        img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir, dete_mode)
-        print("dete model_list : {0}".format(len(img_path_list)))
+        if assign_img_dir is None:
+            # just for one assign img dir , when dete finish , stop
+            img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
+        else:
+            img_path_list = FileOperationUtil.re_all_file(assign_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG'])
+            each_img_dir = assign_img_dir
+
         # dete
         for each_img_path in img_path_list:
             dete_img_index += 1
@@ -302,28 +291,25 @@ if __name__ == '__main__':
             print('-'*50)
 
             # delete img path
-            os.remove(each_img_path)
+            if del_dete_img:
+                os.remove(each_img_path)
 
         # when dete finished , delete the img dir
         if each_img_dir is not None:
             if os.path.exists(each_img_dir):
                 if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
                     os.rmdir(each_img_dir)
-        #
 
-        # # todo 在 sign 文件夹中增加 两个表示检测完毕的  txt
-        # end_time = time.time()
-        # # add file to output_dir
-        # res_txt = os.path.join(sign_dir, "res_txt")
-        # os.makedirs(res_txt, exist_ok=True)
-        # txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
-        # with open(txt_path, 'w') as txt_file:
-        #     txt_file.write('done')
-
-        if keep_alive:
-            time.sleep(1)
-        else:
+        # txt in sign dir for sign stop
+        if assign_img_dir is not None:
+            res_txt = os.path.join(sign_dir, "res_txt")
+            os.makedirs(res_txt, exist_ok=True)
+            txt_path = os.path.join(res_txt, "{0}.txt".format(script_index))
+            with open(txt_path, 'w') as txt_file:
+                txt_file.write('done')
             exit()
+        else:
+            time.sleep(1)
 
 
 
