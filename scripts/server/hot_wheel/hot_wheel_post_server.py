@@ -8,7 +8,7 @@ import requests
 from multiprocessing import Pool
 from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
-
+import json
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')
@@ -35,7 +35,10 @@ def post_dete_res(assign_dete_res):
         #})
 
         data.append((each_dete_res.get_result_construction()))
-    res = requests.post(url=url, data=data)
+
+    data = {"test":"OK", "json":"OK", "test_mul_layer":{"in":"ok", "test_next":{"next":"ok"}}}
+    print(data)
+    res = requests.post(url=url, data=json.dumps(data))
     print(res)
 
 
