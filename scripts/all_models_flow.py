@@ -73,8 +73,7 @@ def get_json_dict(json_path):
     return img_name_json_dict
 
 def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
-    """从 sign_dir 中读取需要处理的文件"""
-
+    """get img path from sign txt"""
     if not os.path.exists(sign_txt_path):
         print("* sign txt dir not exists : {0}".format(sign_txt_path))
         return [], None
@@ -92,6 +91,17 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
             if len(img_path_list) != 0:
                 return img_path_list, each_img_dir
     return [], None
+
+def get_img_path_list_from_assgin_img_dir(assign_img_dir, script_num, script_index):
+    """get img path list from assign dir"""
+    if os.path.exists(assign_img_dir):
+        res_list = []
+        img_path_list = list(FileOperationUtil.re_all_file(assign_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+        for each_img_index in range(script_index - 1, len(img_path_list), script_num):
+            res_list.append(img_path_list[each_img_index])
+        #
+        if len(res_list) != 0:
+            return res_list, assign_img_dir
 
 def get_model_list_from_img_name(img_name, M_list):
     """从文件名中获取 model_list，传入的是文件名不是完整的路径"""
@@ -267,8 +277,7 @@ if __name__ == '__main__':
             # just for one assign img dir , when dete finish , stop
             img_path_list, each_img_dir = get_img_path_list_from_sign_dir(sign_txt_path, img_dir)
         else:
-            img_path_list = FileOperationUtil.re_all_file(assign_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG'])
-            each_img_dir = assign_img_dir
+            img_path_list, each_img_dir = get_img_path_list_from_assgin_img_dir(assign_img_dir, script_num, script_index)
 
         # dete
         for each_img_path in img_path_list:
