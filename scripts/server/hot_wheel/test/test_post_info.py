@@ -25,8 +25,8 @@ if __name__ == "__main__":
 
     # post_img_num = 0
     # img_dir = r"/home/ldq/fangtian_test/fangtian_nc_kkx"
-    # img_dir = r"C:\Users\14271\Desktop\del\crop"
-    img_dir = r"C:\Users\14271\Desktop\test_post_data"
+    img_dir = r"C:\Users\14271\Desktop\del\crop"
+    # img_dir = r"C:\Users\14271\Desktop\test_post_data"
     img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
     img_path_end = img_path_list[-1]
     img_path_list = img_path_list[:-1]
