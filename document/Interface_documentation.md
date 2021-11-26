@@ -17,9 +17,9 @@
 
  [comment]: <> ( * python3 hot_wheel_log_server.py --host 127.0.0.1 --port 8802 --img_dir /home/ldq/input_dir --xml_dir /home/ldq/output_dir/save_res )
 
-* python3 hot_wheel_receive_server.py --host 127.0.0.1 --port 8803 --img_dir /home/ldq/input_dir  --sign_dir /home/ldq/sign --batch_size 20
+ [comment]: <> ( * python3 hot_wheel_receive_server.py --host 127.0.0.1 --port 8803 --img_dir /home/ldq/input_dir  --sign_dir /home/ldq/sign --batch_size 20 )
 
-* python3 hot_wheel_post_server.py --host 127.0.0.1 --port 8008 --xml_dir /home/ldq/output_dir/save_res --post_mode 0  
+ [comment]: <> ( * python3 hot_wheel_post_server.py --host 127.0.0.1 --port 8008 --xml_dir /home/ldq/output_dir/save_res --post_mode 0 )
 
 #### 访问检测信息
 
@@ -35,7 +35,12 @@
         * valuse 'True' | 'False'
         * info : 推送的最后一张图片参数设置为 True 否者设置为 False 
     * 推送的图片格式
-        * data={'file_name': each_img_name}
+        * data={'file_name': each_img_name, "device_id":"001", "des":"json_str"}
+            * {
+            "nc":{"position":"x1,y1,x2,y2", "p_id":"id_001"},
+            "fzc":{"position":"x1,y1,x2,y2", "p_id":None}
+            }
+            
         * files={'image': open(each_img_path, 'rb')}
 
 #### 推送给 JAVA 地址

@@ -48,11 +48,12 @@ def parse_args():
     parser.add_argument('--outputDir', dest='outputDir', default=r"/usr/output_dir")
     parser.add_argument('--signDir', dest='signDir', default=r"./sign")
     #
-    parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")
-    parser.add_argument('--model_list', dest='model_list',type=str, default='')
-    parser.add_argument('--ignore_history', dest='ignore_history',type=str, default='True')
-    parser.add_argument('--assign_img_dir', dest='assign_img_dir',type=str, default=None)
-    parser.add_argument('--del_dete_img', dest='del_dete_img',type=str, default='False')
+    parser.add_argument('--scriptIndex', dest='scriptIndex', default=r"1-1")                            # 当前检测线程的 number-index
+    parser.add_argument('--model_list', dest='model_list',type=str, default='')                         # 指定需要检测的模型列表
+    parser.add_argument('--ignore_history', dest='ignore_history',type=str, default='True')             # 如果存在历史 xml 文件，是不是重复进行检测
+    parser.add_argument('--assign_img_dir', dest='assign_img_dir',type=str, default=None)               # 指定检测的文件夹路径
+    parser.add_argument('--del_dete_img', dest='del_dete_img',type=str, default='False')                # 删除检测之后的图片
+    parser.add_argument('--del_empty_dir', dest='del_empty_dir',type=str, default='True')               # 自动删除空文件夹
     #
     parser.add_argument('--gpuID', dest='gpuID', type=int, default=0)
     parser.add_argument('--port', dest='port', type=int, default=45452)
@@ -231,6 +232,7 @@ if __name__ == '__main__':
     sign_dir = args.signDir.strip()
     ignore_history = eval(args.ignore_history)
     del_dete_img = eval(args.del_dete_img)
+    del_empty_img = eval(args.del_empty_dir)
     log_path = os.path.join(output_dir, "log")
     csv_path = os.path.join(output_dir, "result.csv")
     sign_txt_path = os.path.join(sign_dir, "img_dir_to_dete.txt")
@@ -301,10 +303,9 @@ if __name__ == '__main__':
                 os.remove(each_img_path)
 
         # when dete finished , delete the img dir
-        if each_img_dir is not None:
-            if os.path.exists(each_img_dir):
-                if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
-                    os.rmdir(each_img_dir)
+        if del_empty_img and os.path.exists(each_img_dir):
+            if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
+                os.rmdir(each_img_dir)
 
         # txt in sign dir for sign stop
         if assign_img_dir is not None:

@@ -29,6 +29,8 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 
+# todo 下面的几个操作都是在维护一个文件
+
 @app.route('/receive_server/post_img/<is_end>', methods=['post'])
 def receive_img(is_end):
     """获取检测状态"""
@@ -73,16 +75,46 @@ def receive_img(is_end):
 @app.route('/receive_rtsp_server/add_rtsp', methods=['post'])
 def add_rtsp():
     """增加视频流"""
+    data = request.get_data()
+    data = bytes.decode(data)
+    data = json.loads(data)
+    #
+    assign_rtsp = data['rtsp']
+    assign_model_list = eval(data['model_list'])
+    if assign_rtsp not in rtsp_model_dict:
+        rtsp_model_dict[assign_rtsp] = assign_model_list
+        jsonify({"status": "success"})
+    else:
+        jsonify({"status":"error", "message":"rtsp path on dete already"})
 
 @app.route('/receive_rtsp_server/remove_rtsp', methods=['post'])
 def remove_rtsp():
     """删除视频流"""
+    data = request.get_data()
+    data = bytes.decode(data)
+    data = json.loads(data)
+    #
+    assign_rtsp = data['rtsp']
+    if assign_rtsp not in rtsp_model_dict:
+        jsonify({"status": "error", "message": "rtsp not found"})
+    else:
+        rtsp_model_dict.pop(assign_rtsp)
+        jsonify({"status":"success"})
 
 @app.route('/receive_rtsp_server/change_rtsp_model_list', methods=['post'])
 def change_rtsp_model_list():
     """修改视频流对应的模型"""
-
-
+    data = request.get_data()
+    data = bytes.decode(data)
+    data = json.loads(data)
+    #
+    assign_rtsp = data['rtsp']
+    assign_model_list = eval(data['model_list'])
+    if assign_rtsp not in rtsp_model_dict:
+        jsonify({"status": "error", "message": "rtsp not found"})
+    else:
+        rtsp_model_dict[assign_rtsp] = assign_model_list
+        jsonify({"status":"success"})
 
 
 def serv_start():
@@ -114,7 +146,18 @@ if __name__ == "__main__":
     batch_size = args.batch_size
 
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # todo 直接将图片随机平均放到 n 个文件夹中，设置处理完文件夹中的图片后不删除文件夹
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+
+
     # rtsp 地址和模型列表之间的对应关系
+
+
+
+
     rtsp_model_dict = {}
 
 
