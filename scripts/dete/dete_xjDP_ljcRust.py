@@ -24,10 +24,9 @@ def dete_xjDP_ljcRust(model_dict, data):
         # --------------------------------------------------------------------------------------------------------------
         model_xjDP_ljc = model_dict['model_xjDP_ljc']
         model_ljcRust_rust = model_dict['model_ljcRust_rust']
-
+        #
         raw_h, raw_w, _ = data['im'].shape
         detectBoxes = model_xjDP_ljc.detect(data['im'], data['name'])
-
         #
         dete_res_ljc = DeteRes()
         dete_res_ljc.img_path = data['path']
@@ -37,11 +36,7 @@ def dete_xjDP_ljcRust(model_dict, data):
             points, label = ljj_box[0:4], ljj_box[4]
             resized_name = data['name'] + "_resized_" + label + '_' + str(i)
             xmin, xmax, ymin, ymax = model_xjDP_ljc.minirect2(points, raw_h, raw_w)
-            dete_res_ljc.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i,
-                                 describe=resized_name)
-
-        dete_res_ljc.print_as_fzc_format()
-
+            dete_res_ljc.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i, describe=resized_name)
         #
         dete_res_ljc_big = dete_res_ljc.deep_copy()
         dete_res_ljc_big.filter_by_tags(need_tag=['Sanjiaoban', 'ULuoShuan', 'ZhongChui', 'XuanChuiXianJia', 'DBTZB'])
@@ -62,32 +57,14 @@ def dete_xjDP_ljcRust(model_dict, data):
             # OpenCV转换成PIL.Image格式
             img_org = Image.fromarray(cv2.cvtColor(each_sub_array, cv2.COLOR_BGR2RGB))
             # 去除背景
-            result = model_ljcRust_rust.detect_image(img_org)  # 返回的也是Image格式的。所有前景都是1，背景都是0
+            result = model_ljcRust_rust.detect_image(img_org)                       # 返回的也是Image格式的。所有前景都是1，背景都是0
             img = cv2.cvtColor(np.asarray(img_org), cv2.COLOR_RGB2BGR)
             mask = cv2.cvtColor(np.asarray(result), cv2.COLOR_RGB2BGR)
-            img_seg = img * mask  # 对应相乘，背景是0 ，所以剩下的就是前景了。
+            img_seg = img * mask                                                    # 对应相乘，背景是0 ，所以剩下的就是前景了。
             img_seg = img_seg.astype(np.uint8)
-            # img_seg[img_seg==0]=1
-            print(img_seg.dtype)
-            # print(np.unique(img_seg))
-
-            # ########################################################################################################
-            # # fixme: 差异排查原因
-            # # M1:不保存 直接赋值，不对
-            # # M2：保存再读取，对
-            # resizedName = each_dete_obj.des
-            # save_path = os.path.join(frontObj_dir, resizedName + '.jpg')
-            # cv2.imencode('.jpg', img_seg)[1].tofile(save_path)  # 保存抠出来的图
-            # img = cv2.imdecode(np.fromfile(save_path, dtype=np.uint8), cv2.IMREAD_COLOR)
-            # ########################################################################################################
             predict_name = model_ljcRust_rust.cal_rust_matrix(img_seg, Area_label, 0.5)
             each_dete_obj.tag = predict_name
             each_dete_obj.conf = 0.5
-
-        print('-' * 100)
-
-        dete_res_ljc.print_as_fzc_format()
-
         return dete_res_ljc
 
     except Exception as e:
