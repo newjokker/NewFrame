@@ -787,6 +787,19 @@ class DeteRes(ResBase, ABC):
         self._alarms = new_alarms
         return del_alarms
 
+    def filter_by_topn(self, nn):
+        # 远景小目标过滤, 相对小的，从大到小排序，取前nn名的平均值/2作为阈值(籍天明，ljc)
+        obj_area_list = []
+        for dete_obj in self._alarms:
+            obj_area_list.append(dete_obj.get_area())
+        # find threshold
+        threshold = -1
+        obj_area_list.sort(reverse=True)
+        if nn < len(obj_area_list):
+            threshold = np.average(obj_area_list[:nn]) / 2
+        # filter by area
+        self.filter_by_area(threshold)
+
     # ----------------------------------------------- del --------------------------------------------------------------
 
     def del_dete_obj(self, assign_dete_obj, del_all=False):

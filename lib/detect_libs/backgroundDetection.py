@@ -49,7 +49,11 @@ class BackgroundDetection(detection):
         self.debug       = self.cf.getboolean("common", 'debug')
         self.tfmodelName = self.cf.get(self.objName,'modelname')
         self.normSize    = self.cf.getint(self.objName, 'norm_size')
-        self.safe_rate_threshold   = self.cf.getfloat(self.objName,'safe_rate_threshold')
+
+        try:
+            self.safe_rate_threshold   = self.cf.getfloat(self.objName,'safe_rate_threshold')
+        except Exception as e:
+            pass
         self.num_classes = self.cf.getint(self.objName, 'num_classes')
         self.model_image_size = (self.normSize, self.normSize, 3)
         try:
@@ -61,8 +65,10 @@ class BackgroundDetection(detection):
     def model_restore(self):
         self.log.info('===== model restore start =====')
 
+
         # 加密模型
         if self.encryption:
+
             model_path = self.dncryptionModel()
         else:
             model_path = os.path.join(self.modelPath, self.tfmodelName)
@@ -141,11 +147,12 @@ class BackgroundDetection(detection):
 
     @try_except()
     def dncryptionModel(self):
+        print('*********  get in self.encryption **********')
         if not os.path.exists(self.cachePath):
             os.makedirs(self.cachePath)
 
         # 解密模型
-        name, ext = os.path.splitext(self.model_path)
+        name, ext = os.path.splitext(self.tfmodelName)
         model_origin_name = name + ext
         model_locked_name = name + "_locked" + ext
         origin_Fmodel = os.path.join(self.cachePath, model_origin_name)
@@ -153,5 +160,5 @@ class BackgroundDetection(detection):
         decrypt_file(salt, locked_Fmodel, origin_Fmodel)
 
         # 解密后的模型
-        tfmodel = os.path.join(self.cachePath, self.model_path)
+        tfmodel = os.path.join(self.cachePath, self.tfmodelName)
         return tfmodel
