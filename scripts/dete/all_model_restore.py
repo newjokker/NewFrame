@@ -158,6 +158,8 @@ def all_model_restore(args, scriptName, model_list):
     if "xjDP" in model_list or "ljcRust" in model_list:
         from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
         from lib.detect_libs.rustBackgroundDetection import RustBackgroundDetection
+        from lib.detect_libs.kkgY5Detection import KkgDetection
+        from lib.detect_libs.clsViTDetection import ClsViTDetection
         #
         model_xjDP_ljc = R2cnnDetection(args, "xjDP_ljc", scriptName)
         model_ljcRust_rust = RustBackgroundDetection(args, 'ljcRust_rust', scriptName)
@@ -165,9 +167,16 @@ def all_model_restore(args, scriptName, model_list):
         model_xjDP_ljc.model_restore()
         model_ljcRust_rust.model_restore()
         #
+        model_xjDP_kkx = KkgDetection(args, "xjDP_kkx", scriptName)
+        model_xjDP_kkx.model_restore()
+        #
+        model_xjDP_cls = ClsViTDetection(args, "xjDP_cls", scriptName)
+        model_xjDP_cls.model_restore()
+        #
         model_dict['model_xjDP_ljc'] = model_xjDP_ljc
         model_dict['model_ljcRust_rust'] = model_ljcRust_rust
-
+        model_dict['model_xjDP_kkx'] = model_xjDP_kkx
+        model_dict['model_xjDP_cls'] = model_xjDP_cls
 
     return model_dict
 
