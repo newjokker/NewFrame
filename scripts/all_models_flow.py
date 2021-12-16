@@ -134,8 +134,8 @@ def model_dete(img_path, model_dict, model_list):
 
     dete_res_all = DeteRes()
     #
-    res_save_dir = os.path.join(output_dir, "save_res")
-    save_error_dir = os.path.join(output_dir, "save_res", "error")
+    res_save_dir = os.path.join(output_dir, "xml_tmp")
+    save_error_dir = os.path.join(output_dir, "xml_tmp", "error")
     os.makedirs(res_save_dir, exist_ok=True)
     os.makedirs(save_error_dir, exist_ok=True)
     each_img_name = os.path.split(img_path)[1]

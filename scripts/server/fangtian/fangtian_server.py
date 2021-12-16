@@ -26,6 +26,11 @@ class SaveLog():
         if os.path.exists(self.log_path):
             os.remove(self.log_path)
 
+    def init_log(self):
+        log = open(self.log_path, 'a')
+        log.write("Loading Finished")
+        log.close()
+
     def add_log(self, img_name):
         log = open(self.log_path, 'a')
         log.write("process:{0}/{1} {2}\n".format(self.img_index, self.img_count, img_name))
@@ -52,11 +57,16 @@ class SaveLog():
 
 class FTserver(object):
 
-    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num):
+    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num, pid_list=None):
+
+        # fixme 用 fangtian_server 管理跑的 pid ，跑完了直接关掉对应的 pid
+
         self.img_dir = img_dir
-        self.xml_dir = xml_dir
+        self.xml_tmp_dir = xml_dir
         self.res_dir = res_dir
+        self.xml_res_dir = os.path.join(res_dir, "xml_res")
         self.sign_dir = sign_dir
+        self.sign_end_txt_dir = os.path.join(self.sign_dir, 'res_txt')
         self.mul_progress_num = mul_progress_num            # 进程个数
         #
         self.start_time = time.time()
@@ -69,12 +79,13 @@ class FTserver(object):
         img_count = len(list(FileOperationUtil.re_all_file(self.img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG'])))
         self.all_img_count = img_count                                                           # 所有要检测图片的数目
         self.save_log = SaveLog(log_path, img_count, csv_path)
+        self.save_log.init_log()
         self.max_dete_time = 9.5 * self.all_img_count
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束"""
         for i in range(1, self.mul_progress_num+1):
-            each_txt_path = os.path.join(self.sign_dir, "{0}.txt".format(i))
+            each_txt_path = os.path.join(self.sign_end_txt_dir, "{0}.txt".format(i))
             if not os.path.exists(each_txt_path):
                 return False
         return True
@@ -91,20 +102,20 @@ class FTserver(object):
     def empty_history_info(self):
         """清空历史数据"""
 
-        # fixme 不能删了再去创建，因为权限会变得不一样
+        # fixme 这边要清空历史文件
 
-        if os.path.exists(self.res_dir):
-            self.empty_dir(self.res_dir)
+        if os.path.exists(self.xml_res_dir):
+            self.empty_dir(self.xml_res_dir)
 
-        if os.path.exists(self.sign_dir):
-            self.empty_dir(self.res_dir)
+        # if os.path.exists(self.sign_dir):
+        #     self.empty_dir(self.xml_res_dir)
 
-        if os.path.exists(self.xml_dir):
-            self.empty_dir(self.res_dir)
+        # if os.path.exists(self.xml_res_dir):
+        #     self.empty_dir(self.res_dir)
 
         os.makedirs(self.res_dir, exist_ok=True)
         os.makedirs(self.sign_dir, exist_ok=True)
-        os.makedirs(self.xml_dir, exist_ok=True)
+        os.makedirs(self.xml_tmp_dir, exist_ok=True)
 
     def start_monitor(self):
         """开始监听"""
@@ -116,6 +127,9 @@ class FTserver(object):
             img_name_dict[img_name] = os.path.split(each_img_path)[1]
         #
         while True:
+
+            # todo 设置多种退出机制（1）超时（2）根据 end_txt_dir 中的 txt 证明结束 （3）结果 xml 数目大于等于图片数目
+
             # dete end
             if self.save_log.img_index > self.save_log.img_count:
                 self.stop_time = time.time()
@@ -126,23 +140,26 @@ class FTserver(object):
                 self.stop_time = time.time()
                 return
 
-            xml_path_list = FileOperationUtil.re_all_file(self.xml_dir, endswitch=['.xml'])
+            xml_path_list = FileOperationUtil.re_all_file(self.xml_tmp_dir, endswitch=['.xml'])
 
             time.sleep(3)
 
             for each_xml_path in xml_path_list:
-                print('-'*100)
-                print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
+                # print('-'*100)
+                # print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
                 try:
                     # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
-                    each_dete_res.print_as_fzc_format()
+                    # each_dete_res.print_as_fzc_format()
                     img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
                     self.save_log.add_log(img_name)
                     self.save_log.add_csv_info(each_dete_res, img_name)
                     if os.path.exists(each_xml_path):
-                        os.remove(each_xml_path)
+                        # todo 这边将文件放到另外一个文件夹中去
+                        # os.remove(each_xml_path)
+                        new_xml_path = os.path.join(self.save_xml_dir, os.path.split(each_xml_path)[1])
+                        shutil.move(each_xml_path, new_xml_path)
                 except Exception as e:
                     print(e)
                     self.save_log.add_log(img_name)
@@ -178,6 +195,9 @@ def parse_args():
 
 
 if __name__ == "__main__":
+
+    # fixme 删除历史文件
+    #
 
     args = parse_args()
     ft_server = FTserver(args.img_dir, args.xml_dir, args.res_dir, args.sign_dir, args.mul_progress_num)

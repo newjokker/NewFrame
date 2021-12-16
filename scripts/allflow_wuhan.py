@@ -17,9 +17,11 @@ from tools.xml_to_csv import xml_to_csv
 
 # ----------------------------------------------------------------------------------------------------------------------
 img_dir = r"/usr/input_picture"
-res_dir = r"/usr/output_dir/save_res"
+res_dir = r"/usr/output_dir"
+res_xml_tmp = r"/usr/output_dir/xml_tmp"
 log_path = r"/usr/output_dir/log"
 csv_path = r"/usr/output_dir/result.csv"
+sign_dir = r"/v0.0.1/sign"
 res_txt_dir = r"/usr/output_dir/res_txt"
 receive_post_config_path = r"/v0.0.1/sign/receive_post_config.ini"
 # ----------------------------------------------------------------------------------------------------------------------
@@ -37,42 +39,18 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def start_receive_server(config_path):
-    cf = configparser.ConfigParser()
-    cf.read(config_path)
-    #
-    if cf.has_section('receive'):
-        receive_host = cf.get('receive', 'host')
-        receive_port = cf.get('receive', 'port')
-        receive_img_dir = cf.get('receive', 'img_dir')
-        receive_batch_size = cf.get('receive', 'batch_size')
-        #
-        receive_cmd_str = r"python3 /v0.0.1/scripts/server/hot_wheel/hot_wheel_receive_server.py --host {0} --port {1} --img_dir {2} --batch_size {3}".format(
-            receive_host, receive_port, receive_img_dir, receive_batch_size)
-        receive_pid = subprocess.Popen(receive_cmd_str.split(), shell=False)
-        return receive_pid
-    else:
-        return None
+def start_ft_server(xml_dir, img_dir, res_dir, sign_dir, mul_process_num=2):
+    receive_cmd_str = r"python3 /v0.0.1/scripts/server/fangtian/fangtian_server.py --img_dir {0} --xml_dir {1} --res_dir {2} --sign_dir {3} --mul_progress_num {4}".format(
+        img_dir, xml_dir, res_dir, sign_dir, mul_process_num)
+    receive_pid = subprocess.Popen(receive_cmd_str.split(), shell=False)
+    return receive_pid
 
-def start_post_server(config_path):
-    cf = configparser.ConfigParser()
-    cf.read(config_path)
-    #
-    if cf.has_section('post'):
-        post_host = cf.get('post', 'host')
-        post_port = cf.get('post', 'port')
-        post_xml_dir = cf.get('post', 'xml_dir')
-        post_mode = cf.get('post', 'post_mode')
-        #
-        post_cmd_str = r"python3 /v0.0.1/scripts/server/hot_wheel/hot_wheel_post_server.py --host {0} --port {1} --xml_dir {2} --post_mode {3}".format(
-            post_host, post_port, post_xml_dir, post_mode)
-        post_pid = subprocess.Popen(post_cmd_str.split(), shell=False)
-        return post_pid
-    else:
-        return None
 
 
 if __name__ == "__main__":
+
+    # fixme 对比的是 经过 ft_server 处理过，的那些 xml ，
+
 
     # ------------------------------------------------------------------------------------------------------------------
     args = parse_args()
@@ -103,35 +81,34 @@ if __name__ == "__main__":
         print("* {0}".format(each_cmd_str))
         time.sleep(1)
 
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # todo check and print dete res
-    os.makedirs(res_dir, exist_ok=True)
-    start_time = time.time()
-    img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-    img_count = len(img_path_list)
-
-    while True:
-        res_xml_list = list(FileOperationUtil.re_all_file(res_dir, endswitch=['.xml']))
-        xml_count = len(res_xml_list)
-        if xml_count >= img_count:
-            print("* detection finished")
-            break
-        else:
-            use_time = time.time()-start_time
-            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
-            time.sleep(30)
+    # start fangtian server
+    start_ft_server(res_xml_tmp, img_dir, res_dir, sign_dir, mul_process_num)
 
     # ------------------------------------------------------------------------------------------------------------------
-    print("* xml to csv")
-    xml_to_csv(res_dir, csv_path)
-    print("* xml to csv success ")
 
-    use_time_all = time.time() - start_time
-    print("* dete use time : {0} ,  {1}s/pic".format(use_time_all, use_time_all/img_count))
-
-
-
-
+    # # todo check and print dete res
+    # os.makedirs(res_xml_dir_02, exist_ok=True)
+    # start_time = time.time()
+    # img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+    # img_count = len(img_path_list)
+    #
+    # while True:
+    #     res_xml_list = list(FileOperationUtil.re_all_file(res_xml_res, endswitch=['.xml']))
+    #     xml_count = len(res_xml_list)
+    #     if xml_count >= img_count:
+    #         print("* detection finished")
+    #         break
+    #     else:
+    #         use_time = time.time()-start_time
+    #         print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
+    #         time.sleep(30)
+    #
+    # # ------------------------------------------------------------------------------------------------------------------
+    # print("* xml to csv")
+    # xml_to_csv(res_xml_dir_02, csv_path)
+    # print("* xml to csv success ")
+    #
+    # use_time_all = time.time() - start_time
+    # print("* dete use time : {0} ,  {1}s/pic".format(use_time_all, use_time_all/img_count))
 
 
