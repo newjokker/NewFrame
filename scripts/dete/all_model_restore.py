@@ -42,6 +42,7 @@ from fangtian_info_dict import M_dict, M_model_list, key_M_dict, tag_code_dict
 from JoTools.utils.DecoratorUtil import DecoratorUtil
 
 
+# fixme 已经 import 之后的模型在分支中继续 import 会出现问题，需要查找一下原因
 
 @DecoratorUtil.time_this
 def all_model_restore(args, scriptName, model_list):
@@ -113,15 +114,15 @@ def all_model_restore(args, scriptName, model_list):
         #
         model_dict["model_waipo"] = model_waipo
 
-    if "ljcRust" in model_list:
-        model_ljc_rust_1 = YOLOV5Detection(args, "ljc_rust_one", scriptName)
-        model_ljc_rust_1.model_restore()
-        #
-        model_ljc_rust_2 = ClsDetectionPyTorch(args, "ljc_rust_two", scriptName)
-        model_ljc_rust_2.model_restore()
-        #
-        model_dict["model_ljc_rust_1"] = model_ljc_rust_1
-        model_dict["model_ljc_rust_2"] = model_ljc_rust_2
+    # if "ljcRust" in model_list:
+    #     model_ljc_rust_1 = YOLOV5Detection(args, "ljc_rust_one", scriptName)
+    #     model_ljc_rust_1.model_restore()
+    #     #
+    #     model_ljc_rust_2 = ClsDetectionPyTorch(args, "ljc_rust_two", scriptName)
+    #     model_ljc_rust_2.model_restore()
+    #     #
+    #     model_dict["model_ljc_rust_1"] = model_ljc_rust_1
+    #     model_dict["model_ljc_rust_2"] = model_ljc_rust_2
 
     if "jyhQX" in model_list:
         # jyhQX
@@ -158,8 +159,6 @@ def all_model_restore(args, scriptName, model_list):
     if "xjDP" in model_list or "ljcRust" in model_list:
         from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
         from lib.detect_libs.rustBackgroundDetection import RustBackgroundDetection
-        from lib.detect_libs.kkgY5Detection import KkgDetection
-        from lib.detect_libs.clsViTDetection import ClsViTDetection
         #
         model_xjDP_ljc = R2cnnDetection(args, "xjDP_ljc", scriptName)
         model_ljcRust_rust = RustBackgroundDetection(args, 'ljcRust_rust', scriptName)

@@ -47,7 +47,7 @@ def start_receive_server(config_path):
         receive_img_dir = cf.get('receive', 'img_dir')
         receive_batch_size = cf.get('receive', 'batch_size')
         #
-        receive_cmd_str = r"python3 scripts\server\hot_wheel\hot_wheel_receive_server.py --host {0} --port {1} --img_dir {2} --batch_size {3}".format(
+        receive_cmd_str = r"python3 /v0.0.1/scripts/server/hot_wheel/hot_wheel_receive_server.py --host {0} --port {1} --img_dir {2} --batch_size {3}".format(
             receive_host, receive_port, receive_img_dir, receive_batch_size)
         receive_pid = subprocess.Popen(receive_cmd_str.split(), shell=False)
         return receive_pid
@@ -64,7 +64,7 @@ def start_post_server(config_path):
         post_xml_dir = cf.get('post', 'xml_dir')
         post_mode = cf.get('post', 'post_mode')
         #
-        post_cmd_str = r"python3 scripts\server\hot_wheel\hot_wheel_post_server.py --host {0} --port {1} --xml_dir {2} --post_mode {3}".format(
+        post_cmd_str = r"python3 /v0.0.1/scripts/server/hot_wheel/hot_wheel_post_server.py --host {0} --port {1} --xml_dir {2} --post_mode {3}".format(
             post_host, post_port, post_xml_dir, post_mode)
         post_pid = subprocess.Popen(post_cmd_str.split(), shell=False)
         return post_pid
@@ -90,13 +90,6 @@ if __name__ == "__main__":
     else:
         print("* dete model include : {0}".format(', '.join(model_list)))
 
-    # start receive server and post server
-    if os.path.exists(receive_post_config_path):
-        start_receive_server(receive_post_config_path)
-        start_post_server(receive_post_config_path)
-    else:
-        print("* no receive_post_config.ini just run core dete")
-
     # start dete servre
     for i in range(1, mul_process_num + 1):
         each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --gpuID {2} --model_list {3} --assign_img_dir {4} --ignore_history {5} --del_dete_img {6}".format(
@@ -109,7 +102,6 @@ if __name__ == "__main__":
         print("pid : {0}".format(each_pid.pid))
         print("* {0}".format(each_cmd_str))
         time.sleep(1)
-
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +120,7 @@ if __name__ == "__main__":
         else:
             use_time = time.time()-start_time
             print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
-            time.sleep(5)
+            time.sleep(30)
 
     # ------------------------------------------------------------------------------------------------------------------
     print("* xml to csv")
