@@ -26,7 +26,7 @@ def dete_kkx(model_dict, data):
         model_kkxTC_2 = model_dict["model_kkxTC_2"]
         model_kkxTC_3 = model_dict["model_kkxTC_3"]
         model_kkxQuiting = model_dict["model_kkxQuiting"]
-        model_kkxClearence = model_dict["model_kkxClearence"]
+        # model_kkxClearence = model_dict["model_kkxClearence"]
         # kkxTC_1
         kkxTC_1_out = model_kkxTC_1.detect(data['im'], data['name'])
         if len(kkxTC_1_out[0]) > 0:
@@ -139,33 +139,34 @@ def dete_kkx(model_dict, data):
                     new_dete_obj = each_dete_obj.deep_copy()
                     new_dete_obj.tag = 'kkxTC'
                     kkxTC_dete_res.add_obj_2(new_dete_obj)
-            # -----------------
-            # model_kkxClearence
-            extendRate = 0.0
-            if each_dete_obj.tag not in ['K', 'Xnormal', 'Lm']:
-                continue
-            # dete
-            if each_dete_obj.tag in ["K"]:
-                new_dete_obj = each_dete_obj.deep_copy()
-                # TODO: 外扩一点
-                xmin = new_dete_obj.x1 ; xmax = new_dete_obj.x2 ;ymin = new_dete_obj.y1 ; ymax = new_dete_obj.y2
-                cap_x = xmax - xmin ; cap_y =  ymax - ymin
-                new_dete_obj.x1 = int(xmin - extendRate*cap_x)
-                new_dete_obj.x2 = int(xmax + extendRate*cap_x)
-                new_dete_obj.y1 = int(ymin - extendRate*cap_y)
-                new_dete_obj.y2 = int(ymax + extendRate*cap_y)
-                each_im = kkxTC_1_dete_res.get_sub_img_by_dete_obj_new(new_dete_obj)
-                label, prob = model_kkxClearence.detect(each_im, 'resizedName')
-                new_dete_obj.conf = float(prob)
-                new_dete_obj.des = new_dete_obj.tag
-                #
-                if label == 1 and prob > model_kkxClearence.confThresh:
-                    new_dete_obj.tag = 'clearence'
-                elif label == 2:
-                    new_dete_obj.tag = 'noLm'
-                else:
-                    new_dete_obj.tag = 'SDnormal'
-                kkxTC_dete_res.add_obj_2(new_dete_obj)
+            # ----------------------------------------------------------------------------------------------------------
+            # # model_kkxClearence
+            # extendRate = 0.0
+            # if each_dete_obj.tag not in ['K', 'Xnormal', 'Lm']:
+            #     continue
+            # # dete
+            # if each_dete_obj.tag in ["K"]:
+            #     new_dete_obj = each_dete_obj.deep_copy()
+            #     # TODO: 外扩一点
+            #     xmin = new_dete_obj.x1 ; xmax = new_dete_obj.x2 ;ymin = new_dete_obj.y1 ; ymax = new_dete_obj.y2
+            #     cap_x = xmax - xmin ; cap_y =  ymax - ymin
+            #     new_dete_obj.x1 = int(xmin - extendRate*cap_x)
+            #     new_dete_obj.x2 = int(xmax + extendRate*cap_x)
+            #     new_dete_obj.y1 = int(ymin - extendRate*cap_y)
+            #     new_dete_obj.y2 = int(ymax + extendRate*cap_y)
+            #     each_im = kkxTC_1_dete_res.get_sub_img_by_dete_obj_new(new_dete_obj)
+            #     label, prob = model_kkxClearence.detect(each_im, 'resizedName')
+            #     new_dete_obj.conf = float(prob)
+            #     new_dete_obj.des = new_dete_obj.tag
+            #     #
+            #     if label == 1 and prob > model_kkxClearence.confThresh:
+            #         new_dete_obj.tag = 'clearence'
+            #     elif label == 2:
+            #         new_dete_obj.tag = 'noLm'
+            #     else:
+            #         new_dete_obj.tag = 'SDnormal'
+            #     kkxTC_dete_res.add_obj_2(new_dete_obj)
+            # ----------------------------------------------------------------------------------------------------------
 
         # torch.cuda.empty_cache()
         return kkxTC_dete_res
