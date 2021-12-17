@@ -290,7 +290,7 @@ if __name__ == '__main__':
         for each_img_path in img_path_list:
             dete_img_index += 1
             # -------------------------------------
-            save_dir = os.path.join(output_dir, "save_res")
+            save_dir = os.path.join(output_dir, "xml_res")
             os.makedirs(save_dir, exist_ok=True)
             each_save_name = os.path.split(each_img_path)[1]
             each_save_path_xml = os.path.join(save_dir, each_save_name[:-4] + '.xml')

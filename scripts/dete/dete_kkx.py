@@ -145,7 +145,7 @@ def dete_kkx(model_dict, data):
             if each_dete_obj.tag not in ['K', 'Xnormal', 'Lm']:
                 continue
             # dete
-            if each_dete_obj.tag in ["K", "Xnormal"]:
+            if each_dete_obj.tag in ["K"]:
                 new_dete_obj = each_dete_obj.deep_copy()
                 # TODO: 外扩一点
                 xmin = new_dete_obj.x1 ; xmax = new_dete_obj.x2 ;ymin = new_dete_obj.y1 ; ymax = new_dete_obj.y2

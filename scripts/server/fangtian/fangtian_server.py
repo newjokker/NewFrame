@@ -28,7 +28,7 @@ class SaveLog():
 
     def init_log(self):
         log = open(self.log_path, 'a')
-        log.write("Loading Finished")
+        log.write("Loading Finished\n")
         log.close()
 
     def add_log(self, img_name):
@@ -41,11 +41,6 @@ class SaveLog():
         """add one csv info"""
         for dete_obj in dete_res:
             self.csv_list.append([img_name, dete_obj.tag, dete_obj.conf, dete_obj.x1, dete_obj.y1, dete_obj.x2, dete_obj.y2])
-
-    def read_img_list_finshed(self):
-        log = open(self.log_path, 'a')
-        log.write("Loading Finished\n")
-        log.close()
 
     def close(self):
         log = open(self.log_path, 'a')
@@ -102,18 +97,14 @@ class FTserver(object):
     def empty_history_info(self):
         """清空历史数据"""
 
-        # fixme 这边要清空历史文件
+        #if os.path.exists(self.xml_res_dir):
+        #    self.empty_dir(self.xml_res_dir)
 
-        if os.path.exists(self.xml_res_dir):
-            self.empty_dir(self.xml_res_dir)
-
-        # if os.path.exists(self.sign_dir):
-        #     self.empty_dir(self.xml_res_dir)
-
-        # if os.path.exists(self.xml_res_dir):
-        #     self.empty_dir(self.res_dir)
+        if os.path.exists(self.sign_end_txt_dir):
+            self.empty_dir(self.sign_end_txt_dir)
 
         os.makedirs(self.res_dir, exist_ok=True)
+        os.makedirs(self.xml_res_dir, exist_ok=True)
         os.makedirs(self.sign_dir, exist_ok=True)
         os.makedirs(self.xml_tmp_dir, exist_ok=True)
 
@@ -125,6 +116,26 @@ class FTserver(object):
         for each_img_path in img_path_list:
             img_name = FileOperationUtil.bang_path(each_img_path)[1]
             img_name_dict[img_name] = os.path.split(each_img_path)[1]
+
+        # --------------------------------------------------------------------------------------------------------------
+        # 先将已经完成的结果数据放到 log 中去，用于断点检测
+        for each_xml_path in FileOperationUtil.re_all_file(self.xml_res_dir, endswitch=['.xml']):
+            img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
+            try:
+                # wait for write end
+                each_dete_res = DeteRes(each_xml_path)
+                img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
+                self.save_log.add_log(img_name)
+                self.save_log.add_csv_info(each_dete_res, img_name)
+            except Exception as e:
+                print(e)
+                self.save_log.add_log(img_name)
+                print('-' * 50, 'error', '-' * 50)
+                if os.path.exists(each_xml_path):
+                    os.remove(each_xml_path)
+            self.dete_img_index += 1
+        # --------------------------------------------------------------------------------------------------------------
+
         #
         while True:
 
@@ -158,7 +169,7 @@ class FTserver(object):
                     if os.path.exists(each_xml_path):
                         # todo 这边将文件放到另外一个文件夹中去
                         # os.remove(each_xml_path)
-                        new_xml_path = os.path.join(self.save_xml_dir, os.path.split(each_xml_path)[1])
+                        new_xml_path = os.path.join(self.xml_res_dir, os.path.split(each_xml_path)[1])
                         shutil.move(each_xml_path, new_xml_path)
                 except Exception as e:
                     print(e)

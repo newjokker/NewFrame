@@ -19,6 +19,7 @@ from tools.xml_to_csv import xml_to_csv
 img_dir = r"/usr/input_picture"
 res_dir = r"/usr/output_dir"
 res_xml_tmp = r"/usr/output_dir/xml_tmp"
+res_xml_res = r"/usr/output_dir/xml_res"
 log_path = r"/usr/output_dir/log"
 csv_path = r"/usr/output_dir/result.csv"
 sign_dir = r"/v0.0.1/sign"
@@ -40,9 +41,10 @@ def parse_args():
     return args
 
 def start_ft_server(xml_dir, img_dir, res_dir, sign_dir, mul_process_num=2):
-    receive_cmd_str = r"python3 /v0.0.1/scripts/server/fangtian/fangtian_server.py --img_dir {0} --xml_dir {1} --res_dir {2} --sign_dir {3} --mul_progress_num {4}".format(
+    ft_server_cmd_str = r"python3 /v0.0.1/scripts/server/fangtian/fangtian_server.py --img_dir {0} --xml_dir {1} --res_dir {2} --sign_dir {3} --mul_progress_num {4}".format(
         img_dir, xml_dir, res_dir, sign_dir, mul_process_num)
-    receive_pid = subprocess.Popen(receive_cmd_str.split(), shell=False)
+    print(ft_server_cmd_str)
+    receive_pid = subprocess.Popen(ft_server_cmd_str.split(), shell=False)
     return receive_pid
 
 
@@ -68,6 +70,11 @@ if __name__ == "__main__":
     else:
         print("* dete model include : {0}".format(', '.join(model_list)))
 
+    # empty history
+    if os.path.exists(res_xml_tmp):
+        for each_file_path in FileOperationUtil.re_all_file(res_xml_tmp):
+            os.remove(each_file_path)
+
     # start dete servre
     for i in range(1, mul_process_num + 1):
         each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --gpuID {2} --model_list {3} --assign_img_dir {4} --ignore_history {5} --del_dete_img {6}".format(
@@ -84,31 +91,34 @@ if __name__ == "__main__":
     # start fangtian server
     start_ft_server(res_xml_tmp, img_dir, res_dir, sign_dir, mul_process_num)
 
+    # 等待 60s
+    # time.sleep(60)
+
     # ------------------------------------------------------------------------------------------------------------------
 
-    # # todo check and print dete res
-    # os.makedirs(res_xml_dir_02, exist_ok=True)
-    # start_time = time.time()
-    # img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-    # img_count = len(img_path_list)
-    #
-    # while True:
-    #     res_xml_list = list(FileOperationUtil.re_all_file(res_xml_res, endswitch=['.xml']))
-    #     xml_count = len(res_xml_list)
-    #     if xml_count >= img_count:
-    #         print("* detection finished")
-    #         break
-    #     else:
-    #         use_time = time.time()-start_time
-    #         print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
-    #         time.sleep(30)
-    #
-    # # ------------------------------------------------------------------------------------------------------------------
+    # todo check and print dete res
+    os.makedirs(res_xml_res, exist_ok=True)
+    start_time = time.time()
+    img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+    img_count = len(img_path_list)
+
+    while True:
+        res_xml_list = list(FileOperationUtil.re_all_file(res_xml_res, endswitch=['.xml']))
+        xml_count = len(res_xml_list)
+        if xml_count >= img_count:
+            print("* detection finished")
+            break
+        else:
+            use_time = time.time()-start_time
+            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
+            time.sleep(30)
+
+    # ------------------------------------------------------------------------------------------------------------------
     # print("* xml to csv")
-    # xml_to_csv(res_xml_dir_02, csv_path)
+    # xml_to_csv(res_xml_res, csv_path)
     # print("* xml to csv success ")
-    #
-    # use_time_all = time.time() - start_time
-    # print("* dete use time : {0} ,  {1}s/pic".format(use_time_all, use_time_all/img_count))
+
+    use_time_all = time.time() - start_time
+    print("* dete use time : {0} ,  {1}s/pic".format(use_time_all, use_time_all/img_count))
 
 
