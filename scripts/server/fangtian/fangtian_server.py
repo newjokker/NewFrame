@@ -12,7 +12,7 @@ import argparse
 from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
 from JoTools.utils.CsvUtil import CsvUtil
-
+from JoTools.utils.JsonUtil import JsonUtil
 
 class SaveLog():
 
@@ -168,13 +168,13 @@ class FTserver(object):
                 # print('-'*100)
                 # print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
+                region_img_name = self.img_name_json_dict[img_name]
                 try:
                     # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
                     # each_dete_res.print_as_fzc_format()
-                    img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                    self.save_log.add_log(img_name)
-                    self.save_log.add_csv_info(each_dete_res, img_name)
+                    self.save_log.add_log(region_img_name)
+                    self.save_log.add_csv_info(each_dete_res, region_img_name)
                     if os.path.exists(each_xml_path):
                         # todo 这边将文件放到另外一个文件夹中去
                         # os.remove(each_xml_path)
@@ -182,7 +182,7 @@ class FTserver(object):
                         shutil.move(each_xml_path, new_xml_path)
                 except Exception as e:
                     print(e)
-                    self.save_log.add_log(img_name)
+                    self.save_log.add_log(region_img_name)
                     print('-' * 50, 'error', '-' * 50)
                     if os.path.exists(each_xml_path):
                         os.remove(each_xml_path)
@@ -211,6 +211,7 @@ def parse_args():
     parser.add_argument('--res_dir',dest='res_dir',type=str, default=r"/usr/input_picture")
     parser.add_argument('--sign_dir',dest='sign_dir',type=str, default=r"/usr/input_picture")
     parser.add_argument('--mul_progress_num',dest='mul_progress_num',type=int, default=1)
+    parser.add_argument('--picture_name_json_path',dest='picture_name_json_path', type=str, default=r'/usr/input_picture_attach/pictureName.json')
     #
     args = parser.parse_args()
     return args
@@ -222,7 +223,7 @@ if __name__ == "__main__":
     #
 
     args = parse_args()
-    ft_server = FTserver(args.img_dir, args.xml_dir, args.res_dir, args.sign_dir, args.mul_progress_num)
+    ft_server = FTserver(args.img_dir, args.xml_dir, args.res_dir, args.sign_dir, args.mul_progress_num, args.picture_name_json_path)
     ft_server.main()
 
 
