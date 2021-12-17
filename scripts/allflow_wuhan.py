@@ -25,6 +25,7 @@ csv_path = r"/usr/output_dir/result.csv"
 sign_dir = r"/v0.0.1/sign"
 res_txt_dir = r"/usr/output_dir/res_txt"
 receive_post_config_path = r"/v0.0.1/sign/receive_post_config.ini"
+picture_name_json_path = r"/usr/input_picture_attach/pictureName.json"
 # ----------------------------------------------------------------------------------------------------------------------
 obj_name = "_all_flow"
 time_str = str(time.time())[:10]
@@ -41,8 +42,8 @@ def parse_args():
     return args
 
 def start_ft_server(xml_dir, img_dir, res_dir, sign_dir, mul_process_num=2):
-    ft_server_cmd_str = r"python3 /v0.0.1/scripts/server/fangtian/fangtian_server.py --img_dir {0} --xml_dir {1} --res_dir {2} --sign_dir {3} --mul_progress_num {4}".format(
-        img_dir, xml_dir, res_dir, sign_dir, mul_process_num)
+    ft_server_cmd_str = r"python3 /v0.0.1/scripts/server/fangtian/fangtian_server.py --img_dir {0} --xml_dir {1} --res_dir {2} --sign_dir {3} --mul_progress_num {4} --picture_name_json_path {5}".format(
+        img_dir, xml_dir, res_dir, sign_dir, mul_process_num, picture_name_json_path)
     print(ft_server_cmd_str)
     receive_pid = subprocess.Popen(ft_server_cmd_str.split(), shell=False)
     return receive_pid

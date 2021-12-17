@@ -20,7 +20,7 @@ def parse_args():
 
 
 def xml_to_csv(xml_dir, csv_path):
-    csv_list = [['filename', 'code', 'score', 'xmin', 'ymin', 'xmax', 'ymax']]
+    csv_list = [['filename', 'name', 'score', 'xmin', 'ymin', 'xmax', 'ymax']]
     for each_xml_path in FileOperationUtil.re_all_file(xml_dir, endswitch=['.xml']):
         try:
             each_dete_res = DeteRes(each_xml_path)

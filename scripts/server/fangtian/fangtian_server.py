@@ -52,10 +52,8 @@ class SaveLog():
 
 class FTserver(object):
 
-    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num, pid_list=None):
-
+    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num, picture_name_json_path, pid_list=None):
         # fixme 用 fangtian_server 管理跑的 pid ，跑完了直接关掉对应的 pid
-
         self.img_dir = img_dir
         self.xml_tmp_dir = xml_dir
         self.res_dir = res_dir
@@ -76,6 +74,11 @@ class FTserver(object):
         self.save_log = SaveLog(log_path, img_count, csv_path)
         self.save_log.init_log()
         self.max_dete_time = 9.5 * self.all_img_count
+        #
+        self.picture_name_json_path = picture_name_json_path
+        self.img_name_json_dict = {}
+        # 解析 json 文件
+        self.parse_json_dict()
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束"""
@@ -84,6 +87,11 @@ class FTserver(object):
             if not os.path.exists(each_txt_path):
                 return False
         return True
+
+    def parse_json_dict(self):
+        name_info = JsonUtil.load_data_from_json_file(self.picture_name_json_path)
+        for each in name_info:
+            self.img_name_json_dict[each["fileName"]] = each["originFileName"]
 
     def get_max_dete_time(self, assign_each_dete_use_time=9.5):
         """获取最长的检测时间，超过检测时间自动退出并保存日志和 csv"""
@@ -121,15 +129,16 @@ class FTserver(object):
         # 先将已经完成的结果数据放到 log 中去，用于断点检测
         for each_xml_path in FileOperationUtil.re_all_file(self.xml_res_dir, endswitch=['.xml']):
             img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
+            region_img_name = self.img_name_json_dict[img_name]
             try:
                 # wait for write end
                 each_dete_res = DeteRes(each_xml_path)
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                self.save_log.add_log(img_name)
-                self.save_log.add_csv_info(each_dete_res, img_name)
+                self.save_log.add_log(region_img_name)
+                self.save_log.add_csv_info(each_dete_res, region_img_name)
             except Exception as e:
                 print(e)
-                self.save_log.add_log(img_name)
+                self.save_log.add_log(region_img_name)
                 print('-' * 50, 'error', '-' * 50)
                 if os.path.exists(each_xml_path):
                     os.remove(each_xml_path)
@@ -180,9 +189,11 @@ class FTserver(object):
                 self.dete_img_index += 1
 
     def get_csv(self):
-        self.save_log.close()
         use_time = self.stop_time - self.start_time
         print("* check img {0} use time {1} {2} s/pic".format(self.all_img_count, use_time, use_time / self.all_img_count))
+        print("* xml to csv")
+        self.save_log.close()
+        print("* xml to csv success ")
 
     def main(self):
         """主流程"""
