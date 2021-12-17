@@ -101,6 +101,8 @@ if __name__ == "__main__":
     start_time = time.time()
     img_path_list = list(FileOperationUtil.re_all_file(img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
     img_count = len(img_path_list)
+    # 用于在断点续传的时候准确计算检测速度
+    xml_count_region = len(list(FileOperationUtil.re_all_file(res_xml_res, endswitch=['.xml'])))
 
     while True:
         res_xml_list = list(FileOperationUtil.re_all_file(res_xml_res, endswitch=['.xml']))
@@ -110,7 +112,7 @@ if __name__ == "__main__":
             break
         else:
             use_time = time.time()-start_time
-            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / max(xml_count, 1)))
+            print("* detection : {0} | {1} | {2} | {3}s/pic".format(xml_count, img_count-xml_count, use_time, use_time / (max(xml_count - xml_count_region, 1))))
             time.sleep(30)
 
     # ------------------------------------------------------------------------------------------------------------------
