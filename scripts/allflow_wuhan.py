@@ -21,6 +21,8 @@ res_dir = r"/usr/output_dir"
 res_xml_tmp = r"/usr/output_dir/xml_tmp"
 res_xml_res = r"/usr/output_dir/xml_res"
 log_path = r"/usr/output_dir/log"
+log_dir = r"/usr/output_dir/logs"
+os.makedirs(log_dir, exist_ok=True)
 csv_path = r"/usr/output_dir/result.csv"
 sign_dir = r"/v0.0.1/sign"
 res_txt_dir = r"/usr/output_dir/res_txt"
@@ -81,8 +83,8 @@ if __name__ == "__main__":
         each_cmd_str = r"python3 scripts/all_models_flow.py --scriptIndex {0}-{1} --gpuID {2} --model_list {3} --assign_img_dir {4} --ignore_history {5} --del_dete_img {6}".format(
             mul_process_num, i, gpu_id_list[(i-1)%gpu_num], ','.join(model_list), r'/usr/input_picture', 'True', 'False')
 
-        each_bug_file = open(os.path.join("./logs", "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
-        each_std_file = open(os.path.join("./logs", "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
+        each_bug_file = open(os.path.join(log_dir, "bug{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
+        each_std_file = open(os.path.join(log_dir, "std1{0}_".format(i) + time_str + obj_name + ".txt"), "w+")
 
         each_pid = subprocess.Popen(each_cmd_str.split(), stdout=each_std_file, stderr=each_bug_file, shell=False)
         print("pid : {0}".format(each_pid.pid))

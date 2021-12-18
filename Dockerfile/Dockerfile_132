@@ -41,7 +41,34 @@ COPY ./data/v0.0.1 /v0.0.1
 RUN chmod 777 ./ -R
 
 # compile the py
-# RUN python3 /v0.0.1/scripts/tools/encrypt.py -end /v0.0.1/lib/detect_libs/,/v0.0.1/lib/JoTools/,/v0.0.1/lib/detect_utils/,/v0.0.1/scripts/dete/ -env /opt/conda/pkgs/python-3.8.8-hdb3f193_4/include/python3.8/ -c
+RUN python3 /v0.0.1/scripts/tools/encrypt.py -end /v0.0.1/lib/detect_libs/,/v0.0.1/lib/JoTools/,/v0.0.1/lib/detect_utils/,/v0.0.1/scripts/dete/ -env /opt/conda/pkgs/python-3.8.8-hdb3f193_4/include/python3.8/ -c
+
+# start server
+CMD ["/v0.0.1/start_server.sh"]
+
+# -id, Run container in background and print container ID
+# docker run --gpus device=0 -v /etc/localtime:/etc/localtime:ro -v /home/ldq/input_dir:/usr/input_picture:ro -v /home/ldq/output_test:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -e MODEL_TYPES=00,01 -e NMS=0.6 -e SCORE=0.3 -d tuxingkeji:v2.4.0 -it wuhan_ft:v2.4.0 /bin/bash
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

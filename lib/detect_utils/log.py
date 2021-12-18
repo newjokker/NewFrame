@@ -4,8 +4,10 @@ import sys
 import os
 import datetime
 
-workdir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) 
-cwd = os.path.dirname(os.path.abspath(__file__))
+# workdir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# workdir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# cwd = os.path.dirname(os.path.abspath(__file__))
+
 class detlog(object):
     '''
     def __new__(cls,*args,**kw):
@@ -16,12 +18,17 @@ class detlog(object):
     '''
     def __init__(self, model, filename,logID):
         date = datetime.datetime.now().strftime('%Y-%m-%d')
-        if os.path.exists(os.path.join(workdir, 'logs')):
-            logdir = os.path.join(workdir, 'logs', model,date + '-' + str(logID))
-        elif os.path.exists(os.path.join(cwd,'logs')):
-            logdir = os.path.join(cwd,'logs',model,date + '-' + str(logID))
-        else:
-            logdir = os.path.join(cwd,'..','..','logs',model,date + '-' + str(logID))
+        # if os.path.exists(os.path.join(workdir, 'logs')):
+        #     logdir = os.path.join(workdir, 'logs', model,date + '-' + str(logID))
+        # elif os.path.exists(os.path.join(cwd,'logs')):
+        #     logdir = os.path.join(cwd,'logs',model,date + '-' + str(logID))
+        # else:
+        #     logdir = os.path.join(cwd,'..','..','logs',model,date + '-' + str(logID))
+
+        # 直接执行 log 的位置
+        # logdir = r"/usr/output_dir/logs"
+        logdir = os.path.join(r"/usr/output_dir/logs", model, date + '-' + str(logID))
+
         if not os.path.exists(logdir):
             print(logdir)
             os.makedirs(logdir)
