@@ -47,7 +47,7 @@ RUN python3 /v0.0.1/scripts/tools/encrypt.py -end /v0.0.1/lib/detect_libs/,/v0.0
 CMD ["/v0.0.1/start_server.sh"]
 
 # -id, Run container in background and print container ID
-# docker run --gpus device=0 -v /etc/localtime:/etc/localtime:ro -v /home/ldq/input_dir:/usr/input_picture:ro -v /home/ldq/output_test:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -e MODEL_TYPES=00,01 -e NMS=0.6 -e SCORE=0.3 -d tuxingkeji:v2.4.0 -it wuhan_ft:v2.4.0 /bin/bash
+# docker run --gpus device=0 -v /etc/localtime:/etc/localtime:ro -v /home/ldq/input_dir:/usr/input_picture:ro -v /home/ldq/output_test:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -e MODEL_TYPES=00,01 -e NMS=0.6 -e SCORE=0.3 -d wuhan_ft:v2.4.0
 
 
 

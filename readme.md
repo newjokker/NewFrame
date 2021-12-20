@@ -21,6 +21,8 @@
 * 使用指定参数
 * docker run --gpus device=0 -v /home/ldq/input_dir:/usr/input_picture -v /home/ldq/output_test:/usr/output_dir -e mul_process_num=2 -e gpu_id_list=0 -e model_list=nc,jyzZB,fzc,fzcRust,kkxTC,kkxQuiting,kkxClearance -it  test:v2 /v0.0.1/start_server.sh
 
+* 武汉那边指定的参数，测试的时候不能在后面加 /bin/bash 否者会启动不了，直接 exit 
+* docker run --gpus device=0 -v /etc/localtime:/etc/localtime:ro -v /home/ldq/input_dir:/usr/input_picture:ro -v /home/ldq/output_test:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -e MODEL_TYPES=00,01 -e NMS=0.6 -e SCORE=0.3 -d wuhan_ft:v2.4.2
 
 
 
