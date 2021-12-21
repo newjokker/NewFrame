@@ -28,26 +28,22 @@ def dete_xjDP_ljcRust(model_dict, data):
         model_xjDP_kkx = model_dict['model_xjDP_kkx']
         model_xjDP_cls = model_dict['model_xjDP_cls']
         #
-        raw_h, raw_w, _ = data['im'].shape
-        detectBoxes = model_xjDP_ljc.detect(data['im'], data['name'])
-        #
-        dete_res_ljc = DeteRes()
+        # --------------------------------------------------------------------------------------------------------------
+
+        dete_res_ljc = model_xjDP_ljc.detectSOUT(path=data['path'], image=copy.deepcopy(data['im']), image_name=data['name'])
+        dete_res_ljc.do_nms(threshold=0.5)
         dete_res_ljc.img_path = data['path']
         dete_res_ljc.file_name = data['name']
-        #
-        for i, ljj_box in enumerate(detectBoxes):
-            points, label = ljj_box[0:4], ljj_box[4]
-            resized_name = data['name'] + "_resized_" + label + '_' + str(i)
-            xmin, xmax, ymin, ymax = model_xjDP_ljc.minirect2(points, raw_h, raw_w)
-            dete_res_ljc.add_obj(int(xmin), int(ymin), int(xmax), int(ymax), str(label), conf=-1, assign_id=i, describe=resized_name)
+        dete_res_ljc.img_ndarry = data['im']
+
         # --------------------------------------------------------------------------------------------------------------
         # ljcRust
-        dete_res_ljc_big = dete_res_ljc.deep_copy()
+        dete_res_ljc_big = dete_res_ljc.deep_copy(copy_img=False)
         dete_res_ljc_big.filter_by_tags(need_tag=['Sanjiaoban', 'ULuoShuan', 'ZhongChui', 'XuanChuiXianJia', 'DBTZB'])
         dete_res_ljc_big.filter_by_topn(3)
         dete_res_ljc_big.filter_by_area(12000)
         #
-        dete_res_ljc_small = dete_res_ljc.deep_copy()
+        dete_res_ljc_small = dete_res_ljc.deep_copy(copy_img=False)
         dete_res_ljc_small.filter_by_tags(need_tag=['PGuaBan', 'ZGuaBan', 'UBGuaBan', 'UGuaHuan', 'ZHGuaHuan', 'ZBDGuaBan', 'WTGB', 'PTTZB','other1'])
         dete_res_ljc_small.filter_by_topn(3)
         dete_res_ljc_small.filter_by_area(6000)
@@ -57,7 +53,7 @@ def dete_xjDP_ljcRust(model_dict, data):
         Area_label = model_ljcRust_rust.get_label()
         #
         for each_dete_obj in dete_res_ljc.alarms:
-            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj(each_dete_obj, RGB=False)
+            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)
             # OpenCV转换成PIL.Image格式
             img_org = Image.fromarray(cv2.cvtColor(each_sub_array, cv2.COLOR_BGR2RGB))
             # 去除背景
@@ -67,9 +63,8 @@ def dete_xjDP_ljcRust(model_dict, data):
             img_seg = img * mask                                                    # 对应相乘，背景是0 ，所以剩下的就是前景了。
             img_seg = img_seg.astype(np.uint8)
             predict_name = model_ljcRust_rust.cal_rust_matrix(img_seg, Area_label, 0.5)
-            each_dete_obj.tag = predict_name
+            each_dete_obj.tag = each_dete_obj.tag + '_' + predict_name
             each_dete_obj.conf = 0.5
-
         # --------------------------------------------------------------------------------------------------------------
         # xjDP_kkx
         dete_kg_lm = dete_res_ljc.deep_copy(copy_img=False)
@@ -80,7 +75,7 @@ def dete_xjDP_ljcRust(model_dict, data):
             ## kkg+others on a ljc cap ##
             each_dete_kg_lm.reset_alarms([])
             # get array 连接件正框图片矩阵 np.array
-            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj(each_dete_obj,RGB=True)
+            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True, augment_parameter=[0.2, 0.2, 1.2, 0.2])
             ljc_yCenter = int((each_dete_obj.y1 + each_dete_obj.y2)*0.5)
             # 小金具定位检测结果集合 on a ljc martrix-cap
             out = model_xjDP_kkx.detect(each_sub_array, data['name'])
@@ -115,6 +110,8 @@ def dete_xjDP_ljcRust(model_dict, data):
 
         '''业务逻辑：other* 和 dense内的K过滤'''
         dete_res_kkx = dete_kg_lm.deep_copy(copy_img=False)
+        dete_res_kkx.img_ndarry = data['im']
+        #
         only_other_3 = dete_kg_lm.deep_copy(copy_img=False)
         only_k = dete_kg_lm.deep_copy(copy_img=False)
         only_other_3.filter_by_tags(need_tag = model_xjDP_kkx.labeles_checkedOut)
@@ -137,7 +134,7 @@ def dete_xjDP_ljcRust(model_dict, data):
         #
         for each_dete_obj in dete_res_kkx:
             # dete
-            im = dete_res_kkx.get_sub_img_by_dete_obj(each_dete_obj)
+            im = dete_res_kkx.get_sub_img_by_dete_obj_new(each_dete_obj)
             label, prob = model_xjDP_cls.detect(im, 'resizedName')
 
             each_dete_obj.conf = float(prob)

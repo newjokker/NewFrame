@@ -2,7 +2,8 @@
 
 echo "start serve"
 
-model_list=${model_list:-fzc,fzcRust,kkxTC,kkxClearance,kkxQUiting,jyzZB,nc}
+#model_list=${model_list:-fzc,fzcRust,kkxTC,kkxClearance,kkxQUiting,jyzZB,nc,}
+model_list=${model_list:-fzc,fzcRust,kkxTC,kkxClearance,kkxQUiting,jyzZB,nc,xjDP,ljcRust}
 gpu_id_list=${gpu_id_list:-0}
 mul_process_num=${mul_process_num:-2}
 MODEL_TYPES=${MODEL_TYPES:-00,01,02,03,04,05,06}

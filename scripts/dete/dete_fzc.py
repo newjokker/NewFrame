@@ -58,7 +58,8 @@ def dete_fzc(model_dict, data):
                 continue
 
             # fixme 过滤掉那些应该不属于防振锤的类型
-            if each_dete_obj.tag not in ['fzc_broken', 'yt', 'zd_yt']:
+            # if each_dete_obj.tag not in ['fzc_broken', 'yt', 'zd_yt']:
+            if each_dete_obj.tag not in ['yt', 'zd_yt']:
                 continue
 
             crop_array_rust = dete_res_fzc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=False)

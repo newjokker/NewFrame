@@ -157,10 +157,12 @@ def all_model_restore(args, scriptName, model_list):
         #model_dict["model_xjQX_2"] = model_xjQX_2
 
     if "xjDP" in model_list or "ljcRust" in model_list:
-        from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
+        # from lib.detect_libs.r2cnnPytorchDetection import R2cnnDetection
         from lib.detect_libs.rustBackgroundDetection import RustBackgroundDetection
+        # from lib.detect_libs.ljcY5Detection import LjcDetection
         #
-        model_xjDP_ljc = R2cnnDetection(args, "xjDP_ljc", scriptName)
+        # model_xjDP_ljc = R2cnnDetection(args, "xjDP_ljc", scriptName)
+        model_xjDP_ljc = LjcDetection(args, "xjDP_ljc", scriptName)
         model_ljcRust_rust = RustBackgroundDetection(args, 'ljcRust_rust', scriptName)
         #
         model_xjDP_ljc.model_restore()
