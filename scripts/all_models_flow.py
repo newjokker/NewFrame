@@ -59,7 +59,7 @@ def parse_args():
     parser.add_argument('--port', dest='port', type=int, default=45452)
     parser.add_argument('--gpuRatio', dest='gpuRatio', type=float, default=0.3)
     parser.add_argument('--host', dest='host', type=str, default='127.0.0.1')
-    parser.add_argument('--logID', dest='logID', type=str, default=str(uuid.uuid1())[:6])
+    parser.add_argument('--logID', dest='logID', type=str, default=str(uuid.uuid1())[:12])
     parser.add_argument('--objName', dest='objName', type=str, default='')
     #
     args = parser.parse_args()

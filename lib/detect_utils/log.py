@@ -16,7 +16,7 @@ class detlog(object):
             cls._instance = org.__new__(cls,*args,**kw)
         return cls._instance
     '''
-    def __init__(self, model, filename,logID):
+    def __init__(self, model, filename, logID):
         date = datetime.datetime.now().strftime('%Y-%m-%d')
         # if os.path.exists(os.path.join(workdir, 'logs')):
         #     logdir = os.path.join(workdir, 'logs', model,date + '-' + str(logID))
@@ -30,8 +30,7 @@ class detlog(object):
         logdir = os.path.join(r"/usr/output_dir/logs", model, date + '-' + str(logID))
 
         if not os.path.exists(logdir):
-            print(logdir)
-            os.makedirs(logdir)
+            os.makedirs(logdir, exist_ok=True)
         
         logpath = os.path.join(logdir, filename+'.log')
         loglen = 1024*1024*1024

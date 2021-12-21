@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument('--mul_process_num', dest='mul_process_num', type=int, default=2)
     parser.add_argument('--gpu_id_list', dest='gpu_id_list', type=str, default='0')
     parser.add_argument('--model_list', dest='model_list', type=str, default='')
+    parser.add_argument('--model_types', dest='model_types', type=str, default='01,02,03')
     #
     args = parser.parse_args()
     return args
@@ -65,6 +66,28 @@ if __name__ == "__main__":
     gpu_id_list_str = args.gpu_id_list
     gpu_id_list = gpu_id_list_str.strip().split(',')
     gpu_num = len(gpu_id_list)
+    model_types = args.model_types.strip().split(',')
+    # ------------------------------------------------------------------------------------------------------------------
+    # filter model_list
+    del_model_list = []
+    if '01' not in model_types:
+        del_model_list.append('nc')
+    if '03' not in model_types:
+        del_model_list.append('jyzZB')
+    if '04' not in model_types:
+        del_model_list.append("kkxTC")
+        del_model_list.append("kkxQuiting")
+        del_model_list.append("kkxClearance")
+        del_model_list.append("fzc")
+        del_model_list.append("fzcRust")
+        #
+        del_model_list.append("xjDP")
+        del_model_list.append("ljcRust")
+    #
+    for each_del_model in del_model_list:
+        if each_del_model in model_list:
+            model_list.remove(each_del_model)
+    # ------------------------------------------------------------------------------------------------------------------
 
     # if no model to dete : exit
     if len(model_list) == 0:
