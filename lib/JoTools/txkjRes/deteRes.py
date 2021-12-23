@@ -1204,3 +1204,33 @@ class DeteRes(ResBase, ABC):
                 continue
             else:
                 self.add_obj_2(tag1)
+
+    def filter_by_boundary(self,xmin,xmax,ymin,ymax,need_tags=[]):
+        new_alarms = []
+        for obj in self._alarms:
+            if obj.tag in need_tags or len(need_tags) == 0:
+                if obj.x1 < xmin or obj.x2 > xmax or obj.y1 < ymin or obj.y2 > ymax:
+                    continue
+                else:
+                    new_alarms.append(obj)
+            else:
+                new_alarms.append(obj)
+        self._alarms = new_alarms
+
+    def do_augment_short_long(self, augment_parameter_short, augment_parameter_long, is_relative=True, need_tags=[]):
+        """对检测框进行扩展"""
+
+        # todo 这个函数不该存在，想办法融合到其他数据中
+        try:
+            for each_dete_obj in self._alarms:
+                if isinstance(each_dete_obj, DeteObj):
+                    if each_dete_obj.tag in need_tags or len(need_tags) == 0:
+                        if (each_dete_obj.x2-each_dete_obj.x1) > (each_dete_obj.y2-each_dete_obj.y1):
+                            augment_parameter_long.extend(augment_parameter_short)
+                            each_dete_obj.do_augment(augment_parameter=augment_parameter_long, width=self.width, height=self.height, is_relative=is_relative)
+                        else:
+                            augment_parameter_short.extend(augment_parameter_long)
+                            each_dete_obj.do_augment(augment_parameter=augment_parameter_short, width=self.width, height=self.height, is_relative=is_relative)
+        except Exception as e:
+            print(e.__traceback__.tb_lineno)
+            print(e)

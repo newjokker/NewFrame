@@ -39,9 +39,21 @@ def dete_jyzZB(model_dict, data):
             new_dete_res.offset(each_dete_obj.x1, each_dete_obj.y1)
             result_res += new_dete_res
 
+
+
+
         # new logic
+
         result_res.filter_tag1_by_tag2_with_nms(['jyzSingle'], ['jyzhead'], 0.5)
+
         result_res.do_nms_center_point(ignore_tag=True)
+
+
+        result_res.filter_by_boundary(20, result_res.width-20, 20, result_res.height-20, ['jyzzb', 'jyzSingle'])
+
+        result_res.do_augment_short_long([0.6, 0.6], [0.4, 0.4], True, ['jyzSingle'])
+        result_res.do_augment_short_long([0, 0], [-0.2, -0.2], True, ['jyzzb'])
+
         result_res.update_tags({"jyzSingle": "jyzzb"})
         # torch.cuda.empty_cache()
         return result_res
