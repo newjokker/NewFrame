@@ -136,7 +136,53 @@ class RustBackgroundDetection(BackgroundDetection):
 
             # 各个区域的像素计数
             num_normal = img_color_space[np.where(color_in_area == 1)].sum()  # 安全
-            num_red = img_color_space[np.where(color_in_area == 2)].sum()  # 红锈
+            num_red    = img_color_space[np.where(color_in_area == 2)].sum()  # 红锈
+            num_yellow = img_color_space[np.where(color_in_area == 3)].sum()  # 黄锈
+
+            num_rust = num_red + num_yellow  # 通过这个赋值，可以神奇地提升一点速度。最大限度的缩减运算
+            if num_rust == 0:  # 有的图，全部都被分割为背景，导致所有区域的数量都是0，这种图默认是干净的。
+                clean = 'clean'
+            else:
+                if (num_rust / (num_rust + num_normal)) > rust_rate:
+                    clean = 'rust'
+                else:
+                    clean = 'clean'
+
+            return clean
+
+    @try_except()
+    def cal_rust_matrix_speed(self,img_seg, area_label, rust_rate):  # 返回bool型
+
+            # 这里必须要转换为float或其他可进行浮点运算的类型。图片默认为uint8类型，在乘除和开方时，进行的不是浮点运算。
+            B = img_seg[:, :, 0].astype(float)  # 防止奇异值，在B通道上全部加1，应该不影响最终的结果
+            B += 1
+            G = img_seg[:, :, 1].astype(float)
+            R = img_seg[:, :, 2].astype(float)
+
+            # 方向角正切矩阵和高度角正切矩阵的计算
+            d = np.arctan(G / B) / np.pi * 1800
+            h = np.arctan(R / np.sqrt(G ** 2 + B ** 2)) / np.pi * 1800
+
+            hs = h.reshape(h.size).astype(int)
+            ds = d.reshape(d.size).astype(int)  # 展平，并转换为整型，后续将作为索引使用。
+            img_color_space = np.zeros([901, 901], dtype=int)  # 表述该图像的色彩空间，高度角放在第一个维度
+
+            pix_num = hs.size
+            choose_rate = 1
+            if pix_num > 6000:
+                choose_rate = int(pix_num / 3000)
+
+            # 经过一波删减之后，可迭代对象长度下降到了1-2千。提速50%
+            for i in range(0, pix_num, choose_rate):
+                img_color_space[ds[i]][hs[i]] += 1
+
+            # 计算各个分区都被覆盖了多少空间。
+            img_color_mask = np.array(img_color_space != 0).astype(int)
+            color_in_area = area_label * img_color_mask
+
+            # 各个区域的像素计数
+            num_normal = img_color_space[np.where(color_in_area == 1)].sum()  # 安全
+            num_red    = img_color_space[np.where(color_in_area == 2)].sum()  # 红锈
             num_yellow = img_color_space[np.where(color_in_area == 3)].sum()  # 黄锈
 
             num_rust = num_red + num_yellow  # 通过这个赋值，可以神奇地提升一点速度。最大限度的缩减运算

@@ -51,20 +51,20 @@ def dete_xjDP_ljcRust(model_dict, data):
         dete_res_ljc = dete_res_ljc_big + dete_res_ljc_small
         # --------------------------------------------------------------------------------------------------------------
         Area_label = model_ljcRust_rust.get_label()
-        #
-        # for each_dete_obj in dete_res_ljc.alarms:
-        #     each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True)      # 大金具锈蚀对 RGB 图层顺序很敏感，看看之前的版本的 JoTools 是不是这块没弄好
-        #     # OpenCV转换成PIL.Image格式
-        #     img_org = Image.fromarray(cv2.cvtColor(each_sub_array, cv2.COLOR_BGR2RGB))
-        #     # 去除背景
-        #     result = model_ljcRust_rust.detect_image(img_org)                       # 返回的也是Image格式的。所有前景都是1，背景都是0
-        #     img = cv2.cvtColor(np.asarray(img_org), cv2.COLOR_RGB2BGR)
-        #     mask = cv2.cvtColor(np.asarray(result), cv2.COLOR_RGB2BGR)
-        #     img_seg = img * mask                                                    # 对应相乘，背景是0 ，所以剩下的就是前景了。
-        #     img_seg = img_seg.astype(np.uint8)
-        #     predict_name = model_ljcRust_rust.cal_rust_matrix(img_seg, Area_label, 0.5)
-        #     each_dete_obj.tag = each_dete_obj.tag + '_' + predict_name
-        #     each_dete_obj.conf = 0.5
+
+        for each_dete_obj in dete_res_ljc.alarms:
+            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True)      # 大金具锈蚀对 RGB 图层顺序很敏感，看看之前的版本的 JoTools 是不是这块没弄好
+            # OpenCV转换成PIL.Image格式
+            img_org = Image.fromarray(cv2.cvtColor(each_sub_array, cv2.COLOR_BGR2RGB))
+            # 去除背景
+            result = model_ljcRust_rust.detect_image(img_org)                       # 返回的也是Image格式的。所有前景都是1，背景都是0
+            img = cv2.cvtColor(np.asarray(img_org), cv2.COLOR_RGB2BGR)
+            mask = cv2.cvtColor(np.asarray(result), cv2.COLOR_RGB2BGR)
+            img_seg = img * mask                                                    # 对应相乘，背景是0 ，所以剩下的就是前景了。
+            img_seg = img_seg.astype(np.uint8)
+            predict_name = model_ljcRust_rust.cal_rust_matrix_speed(img_seg, Area_label, 0.5)
+            each_dete_obj.tag = each_dete_obj.tag + '_' + predict_name
+            each_dete_obj.conf = 0.5
         # --------------------------------------------------------------------------------------------------------------
         # xjDP_kkx
         dete_kg_lm = dete_res_ljc.deep_copy(copy_img=False)
