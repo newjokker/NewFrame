@@ -69,24 +69,24 @@ if __name__ == "__main__":
     model_types = args.model_types.strip().split(',')
     # ------------------------------------------------------------------------------------------------------------------
     # filter model_list
-    del_model_list = []
-    if '01' not in model_types:
-        del_model_list.append('nc')
-    if '03' not in model_types:
-        del_model_list.append('jyzZB')
-    if '04' not in model_types:
-        del_model_list.append("kkxTC")
-        del_model_list.append("kkxQuiting")
-        del_model_list.append("kkxClearance")
-        del_model_list.append("fzc")
-        del_model_list.append("fzcRust")
-        #
-        del_model_list.append("xjDP")
-        del_model_list.append("ljcRust")
-    #
-    for each_del_model in del_model_list:
-        if each_del_model in model_list:
-            model_list.remove(each_del_model)
+    # del_model_list = []
+    # if '01' not in model_types:
+    #     del_model_list.append('nc')
+    # if '03' not in model_types:
+    #     del_model_list.append('jyzZB')
+    # if '04' not in model_types:
+    #     del_model_list.append("kkxTC")
+    #     del_model_list.append("kkxQuiting")
+    #     del_model_list.append("kkxClearance")
+    #     del_model_list.append("fzc")
+    #     del_model_list.append("fzcRust")
+    #     #
+    #     del_model_list.append("xjDP")
+    #     del_model_list.append("ljcRust")
+    # #
+    # for each_del_model in del_model_list:
+    #     if each_del_model in model_list:
+    #         model_list.remove(each_del_model)
     # ------------------------------------------------------------------------------------------------------------------
 
     # if no model to dete : exit

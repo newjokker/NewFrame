@@ -78,7 +78,7 @@ class FTserver(object):
         self.picture_name_json_path = picture_name_json_path
         self.img_name_json_dict = {}
         # 解析 json 文件
-        self.parse_json_dict()
+        #self.parse_json_dict()
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束"""
@@ -129,16 +129,18 @@ class FTserver(object):
         # 先将已经完成的结果数据放到 log 中去，用于断点检测
         for each_xml_path in FileOperationUtil.re_all_file(self.xml_res_dir, endswitch=['.xml']):
             img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-            region_img_name = self.img_name_json_dict[img_name]
+            #region_img_name = self.img_name_json_dict[img_name]
             try:
                 # wait for write end
                 each_dete_res = DeteRes(each_xml_path)
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                self.save_log.add_log(region_img_name)
-                self.save_log.add_csv_info(each_dete_res, region_img_name)
+                #self.save_log.add_log(region_img_name)
+                #self.save_log.add_csv_info(each_dete_res, region_img_name)
+                self.save_log.add_csv_info(each_dete_res, img_name)
             except Exception as e:
                 print(e)
-                self.save_log.add_log(region_img_name)
+                #self.save_log.add_log(region_img_name)
+                self.save_log.add_log(img_name)
                 print('-' * 50, 'error', '-' * 50)
                 if os.path.exists(each_xml_path):
                     os.remove(each_xml_path)
@@ -168,13 +170,14 @@ class FTserver(object):
                 # print('-'*100)
                 # print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                region_img_name = self.img_name_json_dict[img_name]
+                # region_img_name = self.img_name_json_dict[img_name]
                 try:
                     # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
                     # each_dete_res.print_as_fzc_format()
                     self.save_log.add_log(region_img_name)
-                    self.save_log.add_csv_info(each_dete_res, region_img_name)
+                    #self.save_log.add_csv_info(each_dete_res, region_img_name)
+                    self.save_log.add_csv_info(each_dete_res, img_name)
                     if os.path.exists(each_xml_path):
                         # todo 这边将文件放到另外一个文件夹中去
                         # os.remove(each_xml_path)
@@ -182,7 +185,8 @@ class FTserver(object):
                         shutil.move(each_xml_path, new_xml_path)
                 except Exception as e:
                     print(e)
-                    self.save_log.add_log(region_img_name)
+                    #self.save_log.add_log(region_img_name)
+                    self.save_log.add_log(img_name)
                     print('-' * 50, 'error', '-' * 50)
                     if os.path.exists(each_xml_path):
                         os.remove(each_xml_path)
