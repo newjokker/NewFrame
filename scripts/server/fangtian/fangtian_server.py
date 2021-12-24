@@ -135,6 +135,7 @@ class FTserver(object):
                 each_dete_res = DeteRes(each_xml_path)
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
                 #self.save_log.add_log(region_img_name)
+                self.save_log.add_log(img_name)
                 #self.save_log.add_csv_info(each_dete_res, region_img_name)
                 self.save_log.add_csv_info(each_dete_res, img_name)
             except Exception as e:
@@ -175,7 +176,7 @@ class FTserver(object):
                     # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
                     # each_dete_res.print_as_fzc_format()
-                    self.save_log.add_log(region_img_name)
+                    self.save_log.add_log(img_name)
                     #self.save_log.add_csv_info(each_dete_res, region_img_name)
                     self.save_log.add_csv_info(each_dete_res, img_name)
                     if os.path.exists(each_xml_path):
