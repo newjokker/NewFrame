@@ -79,21 +79,21 @@ tag_code_dict = {
     "fail": "030200131",
 
     # 金具锈蚀
-    "UGuaHuan_rust": "040201012",                               #U型挂环锈蚀
-    "ZGuaBan_rust":"040202012",
-    "ZBDGuaBan_rust":"040202012",                               #直角挂板锈蚀
-    "WTGB_rust": "040203012",                                   #碗头挂板锈蚀
-    "UBGuaBan_rust": "040205012",                               #球头挂环锈蚀
-    "PGuaBan_rust": "040204012",
-    "QYB_rust":"040204012",                                     #挂板锈蚀
-    "Sanjiaoban_rust": "040210012",
-    "LKLB_rust":"040210012",
-    "LCLB_rust":"040210012",
-    "LLLB_rust":"040210012",
-    "LLB_rust":"040210012",                                     #联板锈蚀
-    "DBTZB_rust": "040209012",
-    "PTTZB_rust":"040209012",                                   #调整板锈蚀
-    "Zhongchui_rust": "040302012",                              #重锤锈蚀
+    "UGuaHuan_rust": "040201011",                               #U型挂环锈蚀
+    "ZGuaBan_rust":"040202011",
+    "ZBDGuaBan_rust":"040202011",                               #直角挂板锈蚀
+    "WTGB_rust": "040203011",                                   #碗头挂板锈蚀
+    "UBGuaBan_rust": "040205011",                               #球头挂环锈蚀
+    "PGuaBan_rust": "040204011",
+    "QYB_rust":"040204011",                                     #挂板锈蚀
+    "Sanjiaoban_rust": "040210011",
+    "LKLB_rust":"040210011",
+    "LCLB_rust":"040210011",
+    "LLLB_rust":"040210011",
+    "LLB_rust":"040210011",                                     #联板锈蚀
+    "DBTZB_rust": "040209011",
+    "PTTZB_rust":"040209011",                                   #调整板锈蚀
+    "Zhongchui_rust": "040302011",                              #重锤锈蚀
 
 
     # 防振锤锈蚀

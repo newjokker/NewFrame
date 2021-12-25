@@ -161,7 +161,7 @@ def dete_xjDP_ljcRust(model_dict, data):
             each_dete_obj.conf = float(prob)
             each_dete_obj.des = each_dete_obj.tag
 
-            if label == 1 and prob > 0.5: #TODO: set lower
+            if label == 1 and prob > 0.8: #TODO: set lower
                 each_dete_obj.tag = 'dp_missed'
             elif label == 2:
                 each_dete_obj.tag = 'kkgLm'
