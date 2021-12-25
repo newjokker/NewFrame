@@ -17,6 +17,17 @@ import cv2
 import numpy as np
 
 
+def flip_increase(xmin, xmax, ymin, ymax,raw_h, raw_w,extendRate = 0.2):
+    cap_x = xmax - xmin
+    cap_y = ymax - ymin
+    xmin_new = max(xmin - extendRate*cap_x,0)
+    xmax_new = min(xmax + extendRate*cap_x,raw_w)
+    ymin_new = max(ymin - cap_y -extendRate*cap_y,0)
+    ymax_new = min(ymax + extendRate*cap_y,raw_h)
+
+    return int(xmin_new),int(xmax_new),int(ymin_new),int(ymax_new)
+
+
 @DecoratorUtil.time_this
 def dete_xjDP_ljcRust(model_dict, data):
     try:
@@ -40,13 +51,13 @@ def dete_xjDP_ljcRust(model_dict, data):
         # ljcRust
         dete_res_ljc_big = dete_res_ljc.deep_copy(copy_img=False)
         dete_res_ljc_big.filter_by_tags(need_tag=['Sanjiaoban', 'ULuoShuan', 'ZhongChui', 'XuanChuiXianJia', 'DBTZB'])
-        dete_res_ljc_big.filter_by_topn(3)
-        dete_res_ljc_big.filter_by_area(12000)
+        #dete_res_ljc_big.filter_by_topn(3)    #TODO: all in
+        #dete_res_ljc_big.filter_by_area(12000)
         #
         dete_res_ljc_small = dete_res_ljc.deep_copy(copy_img=False)
         dete_res_ljc_small.filter_by_tags(need_tag=['PGuaBan', 'ZGuaBan', 'UBGuaBan', 'UGuaHuan', 'ZHGuaHuan', 'ZBDGuaBan', 'WTGB', 'PTTZB','other1'])
-        dete_res_ljc_small.filter_by_topn(3)
-        dete_res_ljc_small.filter_by_area(6000)
+        #dete_res_ljc_small.filter_by_topn(3)    #TODO: all in
+        #dete_res_ljc_small.filter_by_area(6000)
         #
         dete_res_ljc = dete_res_ljc_big + dete_res_ljc_small
         # --------------------------------------------------------------------------------------------------------------
@@ -70,13 +81,22 @@ def dete_xjDP_ljcRust(model_dict, data):
         dete_kg_lm = dete_res_ljc.deep_copy(copy_img=False)
         dete_kg_lm.reset_alarms([])
         # 遍历每一个连接件正框
-        for each_dete_obj in dete_res_ljc:
+
+        for each_dete_obj in dete_res_ljc.deep_copy():
             each_dete_kg_lm = dete_res_ljc.deep_copy(copy_img=False)
             ## kkg+others on a ljc cap ##
             each_dete_kg_lm.reset_alarms([])
             # get array 连接件正框图片矩阵 np.array
             # each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True, augment_parameter=[0.2, 0.2, 1.2, 0.2])   # 当上下左右值不等的时候会报错，出现问题，上下左右扩展一致
-            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True, augment_parameter=[0.2, 0.2, 1.2, 0.2])
+
+            xmin = each_dete_obj.x1
+            xmax = each_dete_obj.x2
+            ymin = each_dete_obj.y1
+            ymax = each_dete_obj.y2
+
+            each_dete_obj.x1, each_dete_obj.x2, each_dete_obj.y1, each_dete_obj.y2 = flip_increase(xmin, xmax, ymin, ymax, dete_res_ljc.height, dete_res_ljc.width, extendRate=0.2)
+
+            each_sub_array = dete_res_ljc.get_sub_img_by_dete_obj_new(each_dete_obj, RGB=True)
             ljc_yCenter = int((each_dete_obj.y1 + each_dete_obj.y2)*0.5)
             # 小金具定位检测结果集合 on a ljc martrix-cap
             out = model_xjDP_kkx.detect(each_sub_array, data['name'])
@@ -141,12 +161,12 @@ def dete_xjDP_ljcRust(model_dict, data):
             each_dete_obj.conf = float(prob)
             each_dete_obj.des = each_dete_obj.tag
 
-            if label == 1 and prob > model_xjDP_cls.confThresh:
+            if label == 1 and prob > 0.5: #TODO: set lower
                 each_dete_obj.tag = 'dp_missed'
             elif label == 2:
                 each_dete_obj.tag = 'kkgLm'
             else:
-                if prob > model_xjDP_cls.confThresh:
+                if prob > 0.5:
                     each_dete_obj.tag = 'dp_normal'
                 else:
                     each_dete_obj.tag = 'dp_missed'

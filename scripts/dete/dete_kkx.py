@@ -125,7 +125,7 @@ def dete_kkx(model_dict, data):
             if label == '2' or each_dete_obj.tag == 'Lm':
                 each_dete_obj.tag = 'Lm'
 
-            elif label == '1' and prob > model_kkxTC_3.confThresh:
+            elif label == '1' and prob > 0.5:
                 each_dete_obj.tag = 'K'
             else:
                 each_dete_obj.tag = 'Xnormal'
