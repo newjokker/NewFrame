@@ -8,6 +8,7 @@
 import os
 import time
 import shutil
+import csv
 import argparse
 from JoTools.utils.FileOperationUtil import FileOperationUtil
 from JoTools.txkjRes.deteRes import DeteRes
@@ -39,20 +40,25 @@ class SaveLog():
 
     def add_csv_info(self, dete_res, img_name):
         """add one csv info"""
+        csv_list= []
         for dete_obj in dete_res:
-            self.csv_list.append([img_name, dete_obj.tag, dete_obj.conf, dete_obj.x1, dete_obj.y1, dete_obj.x2, dete_obj.y2])
+            csv_list.append([img_name, dete_obj.tag, dete_obj.conf, dete_obj.x1, dete_obj.y1, dete_obj.x2, dete_obj.y2])
+
+        with open(self.csv_path, "a", newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(csv_list)
 
     def close(self):
         log = open(self.log_path, 'a')
         log.write("---process complete---\n")
         log.close()
         # save csv
-        CsvUtil.save_list_to_csv(self.csv_list, self.csv_path)
+        # CsvUtil.save_list_to_csv(self.csv_list, self.csv_path)
 
 
 class FTserver(object):
 
-    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num, picture_name_json_path, pid_list=None):
+    def __init__(self, img_dir, xml_dir, res_dir, sign_dir, mul_progress_num, picture_name_json_path, pid_list=None, print_proecss="True"):
         # fixme 用 fangtian_server 管理跑的 pid ，跑完了直接关掉对应的 pid
         self.img_dir = img_dir
         self.xml_tmp_dir = xml_dir
@@ -63,6 +69,7 @@ class FTserver(object):
         self.mul_progress_num = mul_progress_num            # 进程个数
         #
         self.start_time = time.time()
+        self.last_flash_time = self.start_time
         self.stop_time = None
         self.max_dete_time = -1
         self.dete_img_index = 0                             # 已检测的图片的数量
@@ -77,6 +84,8 @@ class FTserver(object):
         #
         self.picture_name_json_path = picture_name_json_path
         self.img_name_json_dict = {}
+        #
+        self.print_process = eval(print_proecss)
         # 解析 json 文件
         #self.parse_json_dict()
 
@@ -105,9 +114,6 @@ class FTserver(object):
     def empty_history_info(self):
         """清空历史数据"""
 
-        #if os.path.exists(self.xml_res_dir):
-        #    self.empty_dir(self.xml_res_dir)
-
         if os.path.exists(self.sign_end_txt_dir):
             self.empty_dir(self.sign_end_txt_dir)
 
@@ -127,32 +133,29 @@ class FTserver(object):
 
         # --------------------------------------------------------------------------------------------------------------
         # 先将已经完成的结果数据放到 log 中去，用于断点检测
-        for each_xml_path in FileOperationUtil.re_all_file(self.xml_res_dir, endswitch=['.xml']):
+        xml_list_new = FileOperationUtil.re_all_file(self.xml_res_dir, endswitch=['.xml'])
+        for each_xml_path in xml_list_new:
             img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-            #region_img_name = self.img_name_json_dict[img_name]
             try:
                 # wait for write end
                 each_dete_res = DeteRes(each_xml_path)
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                #self.save_log.add_log(region_img_name)
                 self.save_log.add_log(img_name)
-                #self.save_log.add_csv_info(each_dete_res, region_img_name)
                 self.save_log.add_csv_info(each_dete_res, img_name)
             except Exception as e:
                 print(e)
-                #self.save_log.add_log(region_img_name)
                 self.save_log.add_log(img_name)
                 print('-' * 50, 'error', '-' * 50)
                 if os.path.exists(each_xml_path):
                     os.remove(each_xml_path)
             self.dete_img_index += 1
+
         # --------------------------------------------------------------------------------------------------------------
 
         #
         while True:
 
             # todo 设置多种退出机制（1）超时（2）根据 end_txt_dir 中的 txt 证明结束 （3）结果 xml 数目大于等于图片数目
-
             # dete end
             if self.save_log.img_index > self.save_log.img_count:
                 self.stop_time = time.time()
@@ -163,35 +166,38 @@ class FTserver(object):
                 self.stop_time = time.time()
                 return
 
-            xml_path_list = FileOperationUtil.re_all_file(self.xml_tmp_dir, endswitch=['.xml'])
-
-            time.sleep(3)
-
+            xml_path_list = list(FileOperationUtil.re_all_file(self.xml_tmp_dir, endswitch=['.xml']))
+            #
             for each_xml_path in xml_path_list:
-                # print('-'*100)
-                # print("* {0} {1}".format(self.dete_img_index + 1, each_xml_path))
                 img_name = img_name_dict[FileOperationUtil.bang_path(each_xml_path)[1]]
-                # region_img_name = self.img_name_json_dict[img_name]
                 try:
-                    # wait for write end
                     each_dete_res = DeteRes(each_xml_path)
-                    # each_dete_res.print_as_fzc_format()
                     self.save_log.add_log(img_name)
-                    #self.save_log.add_csv_info(each_dete_res, region_img_name)
                     self.save_log.add_csv_info(each_dete_res, img_name)
                     if os.path.exists(each_xml_path):
-                        # todo 这边将文件放到另外一个文件夹中去
-                        # os.remove(each_xml_path)
                         new_xml_path = os.path.join(self.xml_res_dir, os.path.split(each_xml_path)[1])
                         shutil.move(each_xml_path, new_xml_path)
                 except Exception as e:
                     print(e)
-                    #self.save_log.add_log(region_img_name)
                     self.save_log.add_log(img_name)
                     print('-' * 50, 'error', '-' * 50)
                     if os.path.exists(each_xml_path):
                         os.remove(each_xml_path)
                 self.dete_img_index += 1
+
+            # print process
+            if self.print_process:
+                use_time = time.time() - self.last_flash_time
+                self.last_flash_time = time.time()
+                dete_img_num = len(xml_path_list)
+                print(dete_img_num)
+                dete_speed = use_time / dete_img_num if dete_img_num > 0 else None
+                average_speed = self.dete_img_index / (time.time()-self.start_time)
+                print("* dete {0} img , speed : {1} pic/second , average speed : {2} pic/second".format(dete_img_num, dete_speed, average_speed))
+
+            # wait
+            time.sleep(5)
+
 
     def get_csv(self):
         use_time = self.stop_time - self.start_time
@@ -217,6 +223,7 @@ def parse_args():
     parser.add_argument('--sign_dir',dest='sign_dir',type=str, default=r"/usr/input_picture")
     parser.add_argument('--mul_progress_num',dest='mul_progress_num',type=int, default=1)
     parser.add_argument('--picture_name_json_path',dest='picture_name_json_path', type=str, default=r'/usr/input_picture_attach/pictureName.json')
+    parser.add_argument('--print_process',dest='print_process', type=str, default='False')
     #
     args = parser.parse_args()
     return args
