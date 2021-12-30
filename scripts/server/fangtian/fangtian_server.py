@@ -150,6 +150,9 @@ class FTserver(object):
                     os.remove(each_xml_path)
             self.dete_img_index += 1
 
+        # update start time
+        self.start_time = time.time()
+
         # --------------------------------------------------------------------------------------------------------------
 
         #
@@ -190,10 +193,9 @@ class FTserver(object):
                 use_time = time.time() - self.last_flash_time
                 self.last_flash_time = time.time()
                 dete_img_num = len(xml_path_list)
-                print(dete_img_num)
-                dete_speed = use_time / dete_img_num if dete_img_num > 0 else None
+                dete_speed =  dete_img_num / use_time if dete_img_num > 0 else None
                 average_speed = self.dete_img_index / (time.time()-self.start_time)
-                print("* dete {0} img , speed : {1} pic/second , average speed : {2} pic/second".format(dete_img_num, dete_speed, average_speed))
+                print("* {0} , dete {1} img , speed : {2} pic/second , average speed : {3} pic/second".format(self.dete_img_index, dete_img_num, dete_speed, average_speed))
 
             # wait
             time.sleep(5)
