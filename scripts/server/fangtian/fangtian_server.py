@@ -204,9 +204,7 @@ class FTserver(object):
     def get_csv(self):
         use_time = self.stop_time - self.start_time
         print("* check img {0} use time {1} {2} s/pic".format(self.all_img_count, use_time, use_time / self.all_img_count))
-        print("* xml to csv")
         self.save_log.close()
-        print("* xml to csv success ")
 
     def main(self):
         """主流程"""
@@ -232,9 +230,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
-
-    # fixme 删除历史文件
-    #
 
     args = parse_args()
     ft_server = FTserver(args.img_dir, args.xml_dir, args.res_dir, args.sign_dir, args.mul_progress_num, args.picture_name_json_path)

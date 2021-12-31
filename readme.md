@@ -23,5 +23,24 @@
 * 武汉那边指定的参数，测试的时候不能在后面加 /bin/bash 否者会启动不了，直接 exit 
 * docker run --gpus device=0 -v /etc/localtime:/etc/localtime:ro -v /home/ldq/input_dir:/usr/input_picture:ro -v /home/ldq/output_test:/usr/output_dir -v /home/ldq/json_dir:/usr/input_picture_attach -e MODEL_TYPES=00,01 -e NMS=0.6 -e SCORE=0.3 -d wuhan_ft:v2.4.2
 
+### 支持更多种类的模型
+
+### 对现在目标检测的意见
+
+* 不要老是证据想法调整模型的阈值，我们应该在模型上下功夫，而不是在其他杂事上花时间
+
+### 我要花功夫的地方
+
+* 更多，更快地去跑模型
+
+* 触及模型中核心的部分
+
+* 
+
+
+
+
+
+
 
 
