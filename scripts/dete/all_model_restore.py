@@ -181,7 +181,9 @@ def all_model_restore(args, scriptName, model_list):
 
     if "fall_ws" in model_list:
         from lib.detect_libs.poseDetection import PoseDetection
-
+        from lib.detect_libs.poseDeepsortDetection import PoseDeepSortDetection
+        from lib.detect_libs.stgcnActionsDetection import StgcnActionsDetection
+        #
         model_fall_ws_pose = PoseDetection(args, "fall_ws_pose", scriptName)
         model_fall_ws_pose.model_restore()
         model_dict["model_fall_ws_pose"] = model_fall_ws_pose
@@ -189,6 +191,14 @@ def all_model_restore(args, scriptName, model_list):
         model_human = YOLOV5Detection(args, "fall_ws_human", scriptName)
         model_human.model_restore()
         model_dict["model_fall_ws_human"] = model_human
+        #
+        model_fall_ws_deep_sort = PoseDeepSortDetection(args, "fall_ws_deep_sort", scriptName)
+        model_fall_ws_deep_sort.model_restore()
+        model_dict["model_fall_ws_deep_sort"] = model_fall_ws_deep_sort
+        #
+        model_fall_ws_action = StgcnActionsDetection(args, "fall_ws_action", scriptName)
+        model_fall_ws_action.model_restore()
+        model_dict["model_fall_ws_action"] = model_fall_ws_action
 
     return model_dict
 

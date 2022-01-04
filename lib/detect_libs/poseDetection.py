@@ -199,7 +199,7 @@ class PoseDetection(detection):
         return point_res
 
     @try_except()
-    def postProcess(self, hm, cropped_boxes):
+    def postProcess_new(self, hm, cropped_boxes):
 
         # heatmap to coord in train.py
         if hm is None:
@@ -228,6 +228,52 @@ class PoseDetection(detection):
         # print
         # point_res.print_as_fzc_format()
         return point_res
+
+    @try_except()
+    def postProcess(self, hm, cropped_boxes):
+
+        # heatmap to coord in train.py
+        if hm is None:
+            return None, None
+
+        assert hm.dim() == 4
+        if hm.size()[1] == 136:
+            eval_joints = [*range(0, 136)]
+        elif hm.size()[1] == 26:
+            eval_joints = [*range(0, 26)]
+        elif hm.size()[1] == 13:
+            eval_joints = [*range(0, 13)]
+        # print(f'hm size: {hm.shape}')
+
+        pose_coords = []
+        pose_scores = []
+        for i in range(hm.shape[0]):
+            bbox = cropped_boxes[i].tolist()
+            # print(bbox)
+            # print("******bbox*****************")
+            pose_coord, pose_score = self.heatmap_to_coord(
+                hm[i][eval_joints], bbox, hm_shape=self._output_size, norm_type=self._norm_type)
+            coord = pose_coord.tolist()
+            score = pose_score.tolist()
+            # print(type(pose_coord))
+            # print(type(pose_score))
+            # print("pose_coord:", coord)
+            # print("pose_score:", score)
+            # print("x:", int(coord[0][0]))
+            # print("y:", int(coord[0][1]))
+            # print("p:", score[0][0])
+            pose_coords.append(torch.from_numpy(pose_coord).unsqueeze(0))
+            pose_scores.append(torch.from_numpy(pose_score).unsqueeze(0))
+            # print("pose_coord:", pose_coord)
+            # print("&&&&&&&&&&&&coo")
+            # print("pose_scores:", pose_scores)
+        preds_kps = torch.cat(pose_coords)
+        preds_scores = torch.cat(pose_scores)
+
+        # print("preds_kps:", preds_kps)
+        # print("preds_scores:", preds_scores)
+
+        return preds_kps, preds_scores
 
     @try_except()
     def preProcess(self, im, boxes, image_name="default.jpg"):
