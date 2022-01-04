@@ -562,19 +562,22 @@ class DeteRes(ResBase, ABC):
         else:
             raise ValueError('one_dete_obj can only be DeteObj or DeteAngleObj')
 
-    def draw_dete_res(self, save_path, line_thickness=2, color_dict=None):
+    def draw_dete_res(self, save_path, assign_img=None, line_thickness=2, color_dict=None):
         """在图像上画出检测的结果"""
         #
         if color_dict is None:
             color_dict = {}
         #
-        if self.img is not None:
-            img = np.array(self.img)
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        elif self.img_path:
-            img = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+        if not assign_img is None:
+            img = assign_img
         else:
-            raise ValueError('need self.img or self.img_path')
+            if self.img is not None:
+                img = np.array(self.img)
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            elif self.img_path:
+                img = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+            else:
+                raise ValueError('need self.img or self.img_path')
         #
         for each_res in self._alarms:
             #
@@ -616,7 +619,8 @@ class DeteRes(ResBase, ABC):
 
         # 保存图片，解决保存中文乱码问题
         cv2.imencode('.jpg', img)[1].tofile(save_path)
-        return color_dict
+        # return color_dict
+        return img
 
     def do_nms(self, threshold=0.1, ignore_tag=False):
         """对结果做 nms 处理，"""

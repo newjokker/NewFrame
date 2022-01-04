@@ -26,6 +26,7 @@ from lib.JoTools.txkjRes.deteObj import DeteObj
 from lib.JoTools.utils.DecoratorUtil import DecoratorUtil
 # load model dete script
 from dete import all_model_restore, dete_nc, dete_fzc, dete_kkx, dete_xjQX, dete_jyhQX, dete_jyzZB, dete_xjDP_ljcRust
+from dete import dete_fall_ws
 
 
 # ------------------ del -----------------------------------------
@@ -187,6 +188,13 @@ def model_dete(img_path, model_dict, model_list):
             xjDP_ljcRust_dete_res = dete_xjDP_ljcRust(model_dict, data)
             if xjDP_ljcRust_dete_res:
                 dete_res_all += xjDP_ljcRust_dete_res
+
+        if "fall_ws" in model_list:
+            fall_ws_dete_res = dete_fall_ws(model_dict, data)
+            if fall_ws_dete_res:
+                dete_res_all += fall_ws_dete_res
+
+        # --------------------------------------------------------------------------------------------------------------
 
         # set confidence as 1 when confidence less then 0
         for each_dete_obj in dete_res_all:

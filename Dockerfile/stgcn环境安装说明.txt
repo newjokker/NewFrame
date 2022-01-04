@@ -1,0 +1,37 @@
+
+
+1. 
+git clone https://github.com/yysijie/st-gcn.git		# 行为检测
+
+https://github.com/MVIG-SJTU/AlphaPose				# 关键点检测
+
+# 安装教程： https://github.com/MVIG-SJTU/AlphaPose/blob/master/docs/INSTALL.md  注意 torch 版本的限制
+
+
+2.
+# https://github.com/yysijie/st-gcn/blob/master/requirements.txt		# 行为检测的环境
+pip install -r requirements.txt
+
+torchvision==0.10.0
+pytorch==1.9.0
+
+pyyaml-6.0
+argparse-1.4.0
+imageio-2.13.5 numpy-1.21.5 pillow-8.4.0
+scikit-video-1.1.11 scipy-1.7.3
+cached-property-1.5.2 h5py-3.6.0
+opencv-python-4.5.5.62
+
+# -----------
+
+requests
+gevent
+flask
+Crypto
+pycryptodome
+easydict
+Cython
+
+# 
+allflow.py中添加
+os.environ['MKL_THREADING_LAYER'] = 'GNU'

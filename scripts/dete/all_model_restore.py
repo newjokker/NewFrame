@@ -179,6 +179,17 @@ def all_model_restore(args, scriptName, model_list):
         model_dict['model_xjDP_kkx'] = model_xjDP_kkx
         model_dict['model_xjDP_cls'] = model_xjDP_cls
 
+    if "fall_ws" in model_list:
+        from lib.detect_libs.poseDetection import PoseDetection
+
+        model_fall_ws_pose = PoseDetection(args, "fall_ws_pose", scriptName)
+        model_fall_ws_pose.model_restore()
+        model_dict["model_fall_ws_pose"] = model_fall_ws_pose
+        #
+        model_human = YOLOV5Detection(args, "fall_ws_human", scriptName)
+        model_human.model_restore()
+        model_dict["model_fall_ws_human"] = model_human
+
     return model_dict
 
 

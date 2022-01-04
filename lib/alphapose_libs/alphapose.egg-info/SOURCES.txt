@@ -1,0 +1,12 @@
+setup.py
+alphapose.egg-info/PKG-INFO
+alphapose.egg-info/SOURCES.txt
+alphapose.egg-info/dependency_links.txt
+alphapose.egg-info/not-zip-safe
+alphapose.egg-info/top_level.txt
+models/layers/dcn/src/deform_conv_cuda.cpp
+models/layers/dcn/src/deform_conv_cuda_kernel.cu
+models/layers/dcn/src/deform_pool_cuda.cpp
+models/layers/dcn/src/deform_pool_cuda_kernel.cu
+utils/roi_align/src/roi_align_cuda.cpp
+utils/roi_align/src/roi_align_kernel.cu
