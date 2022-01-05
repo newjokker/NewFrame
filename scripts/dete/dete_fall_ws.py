@@ -44,15 +44,19 @@ def dete_fall_ws(model_dict, data):
         # -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-        # --------------------------------------------------------------------------------------------------------------
+
+
 
         # ---------------------- Yolo person detect ----------------------------------------------------------------
         boxes, classes, scores = model_human.detect(copy.deepcopy(data['im']))
+        # 当检测为空的时候
+        if not boxes:
+            return
+
         # ---------------------- body keypoint detect --------------------------------------------------------------
         hm, cropped_boxes = model_pose.detect(copy.deepcopy(data['im']), boxes)         # heat map , 第一位是 batch size ，第二维是关键点的个数
         preds_kps, preds_scores = model_pose.postProcess(hm, cropped_boxes)
         # ------------------------ Deep-sort track -----------------------------------------------------------------
-
         # Adapt detections to deep sort input format
         if boxes is not None and len(boxes):
             assert boxes.shape[0] == preds_kps.shape[
@@ -67,10 +71,10 @@ def dete_fall_ws(model_dict, data):
                 action = 'pending..'
 
                 for tbox, tid, keypt in zip(tr_boxes, ids, keypoints):
-                    #
-                    if len(keypt) == 30:
+                    # fixme 这边的意思是至少要有 30 张图片才能做动作预测，
+                    if len(keypt) >= 30:
                         pts = np.array(keypt, dtype=np.float32)
-                        out = model_action.predict(pts, im0.shape[:2])
+                        out = model_action.predict(pts, copy.deepcopy(data['im']).shape[:2])
                         action_name = model_action.classes[out[0].argmax()]
                         print(action_name)
                         action = '{}: {:.2f}%'.format(action_name, out[0].max() * 100)
