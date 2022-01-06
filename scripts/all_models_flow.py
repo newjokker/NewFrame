@@ -158,7 +158,7 @@ def model_dete(img_path, model_dict, model_list):
         dete_res_all.img_path = img_path
         name = os.path.split(img_path)[1]
 
-        # im
+        # im 是 RGB 形式的，不是 GBR 形式的
         im = np.array(Image.open(img_path))
         data = {"path": img_path, 'name': name, 'im': im}
 

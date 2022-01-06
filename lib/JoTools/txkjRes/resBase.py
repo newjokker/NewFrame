@@ -21,6 +21,7 @@ class ResBase():
         #
         self.parse_auto = True                              # 设置时候自动解析参数
         #
+        self.des = ""                                       # 文件的描述信息
         self.img = None
         self.height = -1                                    # 检测图像的高
         self.width = -1                                     # 检测图像的宽
@@ -33,7 +34,6 @@ class ResBase():
         self.redis_conn = None
         self.redis_conn_info = redis_conn_info
         self.img_redis_key = img_redis_key
-        self.des = ""
         #
         self.img_ndarry = None                              # 矩阵数据 ndarry
 

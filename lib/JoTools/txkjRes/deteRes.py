@@ -276,7 +276,7 @@ class DeteRes(ResBase, ABC):
             self.folder = json_info['folder']
 
         if 'des' in json_info:
-            self.folder = json_info['des']
+            self.des = json_info['des']
 
         # 解析 object 信息
         if 'object' in json_info:
@@ -311,7 +311,7 @@ class DeteRes(ResBase, ABC):
         """保存为 xml 文件"""
         xml_info = {'size': {'height': str(int(self.height)), 'width': str(int(self.width)), 'depth': '3'},
                     'filename': self.file_name, 'path': self.img_path, 'object': [], 'folder': self.folder,
-                    'segmented': "", 'source': "", "des": ""}
+                    'segmented': "", 'source': "", "des": str(self.des)}
 
         if assign_alarms is None:
             alarms = self._alarms
@@ -373,7 +373,7 @@ class DeteRes(ResBase, ABC):
         # todo 会生成两个文件 （1）classes.txt 存放类别信息 （2）文件名.txt 存放标注信息，tag mx my w h , mx my 为中心点坐标
         pass
 
-    @DecoratorUtil.time_this
+    # @DecoratorUtil.time_this
     def crop_dete_obj(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None):
         """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
         * augment_parameter = [0.5, 0.5, 0.2, 0.2]
@@ -551,7 +551,7 @@ class DeteRes(ResBase, ABC):
         assign_dete_obj = self.get_dete_obj_by_id(assign_id=assign_id)
         return self.get_sub_img_by_dete_obj(assign_dete_obj, augment_parameter, RGB=RGB, assign_shape_min=assign_shape_min)
 
-    @DecoratorUtil.time_this
+    # @DecoratorUtil.time_this
     def get_sub_img_by_dete_obj(self, assign_dete_obj, augment_parameter=None, RGB=True, assign_shape_min=False):
         """根据指定的 deteObj """
 
@@ -641,7 +641,7 @@ class DeteRes(ResBase, ABC):
         else:
             return self.img_ndarry
 
-    @DecoratorUtil.time_this
+    # @DecoratorUtil.time_this
     def get_img_array(self, RGB=True):
         """获取self.img对应的矩阵信息"""
         if not self.img:
