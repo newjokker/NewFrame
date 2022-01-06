@@ -332,7 +332,7 @@ if __name__ == '__main__':
                 os.remove(each_img_path)
 
         # when dete finished , delete the img dir
-        if del_empty_img and os.path.exists(each_img_dir):
+        if del_empty_img and os.path.isdir(each_img_dir):
             if len(list(FileOperationUtil.re_all_file(each_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))) == 0:
                 os.rmdir(each_img_dir)
 

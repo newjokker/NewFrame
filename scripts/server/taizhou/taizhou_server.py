@@ -35,20 +35,22 @@ import json
 
 class TZserver(object):
 
-    def __init__(self, xml_tmp, xml_res, post_url, img_count, sign_end_txt_dir, mul_progress_num, print_proecss="True"):
+    def __init__(self, xml_tmp, xml_res, post_url, img_count, sign_dir, mul_progress_num, batch_id, print_proecss="True"):
         self.xml_tmp = xml_tmp
         self.xml_res = xml_res
         self.post_url = post_url
         self.img_count = int(img_count)
         self.img_index = 0
         #
-        self.sign_end_txt_dir = sign_end_txt_dir                # 用于监测模型是不是已经运行成功了，状态文件夹
+        self.sign_dir = sign_dir                # 用于监测模型是不是已经运行成功了，状态文件夹
         #
         self.print_process = eval(print_proecss)
         #
         self.mul_progress_num = mul_progress_num
         #
         self.start_time = time.time()
+        #
+        self.batch_id = batch_id
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束 | 根据已检测的图片和图片的总数是否相等"""
@@ -56,11 +58,11 @@ class TZserver(object):
         if self.img_index >= self.img_count:
             return True
 
-        for i in range(1, self.mul_progress_num+1):
-            each_txt_path = os.path.join(self.sign_end_txt_dir, "{0}.txt".format(i))
-            if not os.path.exists(each_txt_path):
-                return False
-        return True
+        # for i in range(1, self.mul_progress_num+1):
+        #     each_txt_path = os.path.join(self.sign_dir, 'res_txt', "{0}.txt".format(i))
+        #     if not os.path.exists(each_txt_path):
+        #         return False
+        # return True
 
     def post_res(self, each_xml_path, headers=None):
 
@@ -73,7 +75,8 @@ class TZserver(object):
             "width": -1,
             "height": -1,
             "count": -1,
-            "alarms": []
+            "alarms": [],
+            "batch_id":self.batch_id
         }
         # alarms
         alarms, id = [], 0
@@ -96,6 +99,7 @@ class TZserver(object):
             headers = {'Connection': 'close'}
         try:
             # response_data = requests.post(url=self.post_url,  data=json.dumps(data), headers=headers)
+            print('-'*50)
             print("* post : {0} data : {1}".format(self.post_url, data))
             # return response_data
         except Exception as e:
@@ -140,9 +144,10 @@ def parse_args():
     parser.add_argument('--xml_res',dest='xml_res',type=str)
     parser.add_argument('--post_url',dest='post_url',type=str)
     parser.add_argument('--img_count',dest='img_count',type=str)
-    parser.add_argument('--mul_progress_num',dest='mul_progress_num',type=int)
+    parser.add_argument('--mul_progress_num',dest='mul_progress_num', type=int)
     parser.add_argument('--sign_end_txt_dir',dest='sign_end_txt_dir', type=str)
     parser.add_argument('--print_process',dest='print_process', type=str, default='False')
+    parser.add_argument('--batch_id',dest='batch_id', type=str, default='--no_batch_id--')
     #
     args = parser.parse_args()
     return args
@@ -151,7 +156,7 @@ def parse_args():
 if __name__ == "__main__":
 
     args = parse_args()
-    ft_server = TZserver(args.xml_tmp, args.xml_res, args.post_url, args.img_count, args.sign_end_txt_dir, args.mul_progress_num)
+    ft_server = TZserver(args.xml_tmp, args.xml_res, args.post_url, args.img_count, args.sign_end_txt_dir, args.mul_progress_num, args.batch_id, "True")
     ft_server.start_monitor()
 
 
