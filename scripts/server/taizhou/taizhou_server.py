@@ -26,6 +26,12 @@ import json
 
 # todo 图像先进行一次解析，不能出现一样的文件路径
 
+# test taizhou_server.py
+# python3 scripts/server/taizhou/taizhou_server.py --xml_tmp /home/ldq/NewFrame_TaiZhou/tmpfiles/xml_tmp --xml_res /home/ldq/NewFrame_TaiZhou/tmpfiles/xml_res --post_url 192.168.3.000 --img_count 10 --mul_progress_num 1 --sign_end_txt_dir /home/ldq/NewFrame_TaiZhou/tmpfiles/all_models_flow --print_process True
+
+# test all_model_flow.py
+# python3 scripts/all_models_flow.py --scriptIndex 1-1 --gpuID 0 --model_list nc --assign_img_dir /home/ldq/NewFrame_TaiZhou/test_img_path.txt --ignore_history True --del_dete_img False --signDir /home/ldq/NewFrame_TaiZhou/tmpfiles --outputDir /home/ldq/NewFrame_TaiZhou/tmpfiles
+
 
 class TZserver(object):
 
@@ -33,7 +39,7 @@ class TZserver(object):
         self.xml_tmp = xml_tmp
         self.xml_res = xml_res
         self.post_url = post_url
-        self.img_count = img_count
+        self.img_count = int(img_count)
         self.img_index = 0
         #
         self.sign_end_txt_dir = sign_end_txt_dir                # 用于监测模型是不是已经运行成功了，状态文件夹
@@ -89,8 +95,9 @@ class TZserver(object):
         if headers is None:
             headers = {'Connection': 'close'}
         try:
-            response_data = requests.post(url=self.post_url,  data=json.dumps(data), headers=headers)
-            return response_data
+            # response_data = requests.post(url=self.post_url,  data=json.dumps(data), headers=headers)
+            print("* post : {0} data : {1}".format(self.post_url, data))
+            # return response_data
         except Exception as e:
             print("----error----")
             print(e)
@@ -103,20 +110,16 @@ class TZserver(object):
                 return
 
             # ----------------------------------------------------------------------------------------------------------
-            xml_path_list = list(FileOperationUtil.re_all_file(self.xml_tmp_dir, endswitch=['.xml']))
+            xml_path_list = list(FileOperationUtil.re_all_file(self.xml_tmp, endswitch=['.xml']))
             #
             for each_xml_path in xml_path_list:
-                try:
-                    self.post_res(each_xml_path)
-                    #
-                    if os.path.exists(each_xml_path):
-                        new_xml_path = os.path.join(self.xml_res_dir, os.path.split(each_xml_path)[1])
-                        shutil.move(each_xml_path, new_xml_path)
-                except Exception as e:
-                    print(e)
-                    print('-' * 50, 'error', '-' * 50)
-                    if os.path.exists(each_xml_path):
-                        os.remove(each_xml_path)
+                self.post_res(each_xml_path)
+                #
+                if os.path.exists(each_xml_path):
+                    new_xml_path = os.path.join(self.xml_res, os.path.split(each_xml_path)[1])
+                    shutil.move(each_xml_path, new_xml_path)
+                if os.path.exists(each_xml_path):
+                    os.remove(each_xml_path)
                 self.img_index += 1
 
             # print process
