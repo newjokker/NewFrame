@@ -10,7 +10,7 @@ class ParseXml(object):
     """解析 xml 中的信息，将信息导出为 xml"""
 
     def __init__(self):
-        self.__attrs = {"folder", "filename", "path", "segmented", "size", "source", "object"}  # 所有的属性
+        self.__attrs = {"folder", "filename", "path", "segmented", "size", "source", "object", "des"}  # 所有的属性
         self.__xml_info_dict = {}  # xml 信息字典
         self.__objects_info = []
         self.__size_info = {}
@@ -83,7 +83,7 @@ class ParseXml(object):
         # 遍历根节点下面的子节点
         for each_node in root_node.childNodes:
             node_name = each_node.nodeName
-            if node_name in ["folder", "filename", "path", "segmented"]:
+            if node_name in ["folder", "filename", "path", "segmented", "des"]:
                 self._parse_node(each_node)
             elif node_name == "source":
                 self._parse_source(each_node)
@@ -108,7 +108,7 @@ class ParseXml(object):
 
     def get_xml_info(self, xml_path):
         # 解析 xml
-        self.__xml_info_dict = {"folder": None, "filename": None, "path": None, "segmented": None}
+        self.__xml_info_dict = {"folder": None, "filename": None, "path": None, "segmented": None, "des": None}
         self._parse_xml(xml_path)
         # 将 xml 中的信息整理输出
         self.__xml_info_dict['size'] = self.__size_info
@@ -127,7 +127,7 @@ class ParseXml(object):
         root = XmlUtil.get_document()
         xml_calss_1 = XmlUtil.add_sub_node(root, root, 'annotation', '')
         # 增加 "folder", "filename", "path", "segmented"
-        for attr_name in ["folder", "filename", "path", "segmented"]:
+        for attr_name in ["folder", "filename", "path", "segmented", "des"]:
             XmlUtil.add_sub_node(root, xml_calss_1, attr_name, assign_xml_info[attr_name])
         # 增加 source
         source_node = XmlUtil.add_sub_node(root, xml_calss_1, "source", '')
@@ -226,11 +226,11 @@ def parse_xml_as_txt(xml_path):
             elif each_line.startswith('<folder>'):
                 xml_info['folder'] = parse_assign_line(each_line, 'folder')
             elif each_line.startswith('<height>'):
-                xml_info['height'] = float(parse_assign_line(each_line, 'height'))
+                xml_info['size']['height'] = float(parse_assign_line(each_line, 'height'))
             elif each_line.startswith('<width>'):
-                xml_info['width'] = float(parse_assign_line(each_line, 'width'))
+                xml_info['size']['width'] = float(parse_assign_line(each_line, 'width'))
             elif each_line.startswith('<depth>'):
-                xml_info['depth'] = float(parse_assign_line(each_line, 'depth'))
+                xml_info['size']['depth'] = float(parse_assign_line(each_line, 'depth'))
             elif each_line.startswith('<path>'):
                 xml_info['path'] = parse_assign_line(each_line, 'path')
             elif each_line.startswith('<segmented>'):

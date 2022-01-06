@@ -41,6 +41,8 @@ class TZserver(object):
         self.print_process = eval(print_proecss)
         #
         self.mul_progress_num = mul_progress_num
+        #
+        self.start_time = time.time()
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束 | 根据已检测的图片和图片的总数是否相等"""
@@ -117,14 +119,13 @@ class TZserver(object):
                         os.remove(each_xml_path)
                 self.img_index += 1
 
-            # # print process
-            # if self.print_process:
-            #     use_time = time.time() - self.last_flash_time
-            #     self.last_flash_time = time.time()
-            #     dete_img_num = len(xml_path_list)
-            #     dete_speed =  dete_img_num / use_time if dete_img_num > 0 else None
-            #     average_speed = self.dete_img_index / (time.time()-self.start_time)
-            #     print("* {0} , dete {1} img , speed : {2} pic/second , average speed : {3} pic/second".format(self.dete_img_index, dete_img_num, dete_speed, average_speed))
+            # print process
+            if self.print_process:
+                use_time = time.time() - self.start_time
+                dete_img_num = self.img_index
+                dete_speed =  dete_img_num / use_time if dete_img_num > 0 else None
+                average_speed = dete_img_num / (time.time() - self.start_time)
+                print("* {0} , dete {1} img , speed : {2} pic/second , average speed : {3} pic/second".format(self.img_index, dete_img_num, dete_speed, average_speed))
 
             # wait
             time.sleep(5)

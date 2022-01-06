@@ -15,10 +15,9 @@ from .deteObj import DeteObj
 from .deteAngleObj import DeteAngleObj
 from ..txkjRes.resTools import ResTools
 from ..utils.JsonUtil import JsonUtil
-from ..txkjRes.deteXml import parse_xml, save_to_xml
+from ..txkjRes.deteXml import parse_xml, save_to_xml, save_to_xml_wh_format
 from ..utils.FileOperationUtil import FileOperationUtil
 from ..utils.DecoratorUtil import DecoratorUtil
-
 
 """
 '__abstractmethods__',
@@ -45,6 +44,7 @@ from ..utils.DecoratorUtil import DecoratorUtil
  'del_dete_obj',                        # [*]删除指定 dete obj
  'del_sub_img_from_crop',               # [*]删除保存的截图，DeteObj crop_path 属性记录了截图的位置
  'do_augment',                          # 框的扩增（上下左右）
+ 'do_func',                             # 做指定的操作
  'do_nms',                              # [*]对框之间做 nms 
  'do_nms_center_point',                 # 对框之间做 center nms
  'do_nms_in_assign_tags',               # 在指定几种 tag 之间做 nms 
@@ -54,7 +54,9 @@ from ..utils.DecoratorUtil import DecoratorUtil
  'filter_by_conf',                      # [*]根据框的置信度进行筛除
  'filter_by_func',                      # 使用指定方法对框进行筛除
  'filter_by_mask',                      # 使用掩膜（掩膜内，掩膜外）对框进行筛除
+ 'filter_by_dete_res_mask',             # 将指定 deteres 的每一个对象做一个 mask 进行掩膜操作
  'filter_by_tags',                      # [*]根据标签类型对框进行筛除
+ 'filter_by_topn',                      # 对deteobj 大小进行排序，根据前 nn 个目标的 1/2 对目标进行过滤
  'get_crop_name_by_id',                 # 获取指定 id 对应的裁剪名（考虑删除该方法） 
  'get_dete_obj_by_id',                  # 获取指定 id 对应的第一个 dete obj
  'get_dete_obj_list_by_func',           # 获取指定方法找到的 dete obj list
@@ -82,6 +84,14 @@ from ..utils.DecoratorUtil import DecoratorUtil
  'set_img_to_redis',                    # 将图像存储到redis中
  'update_tags',                         # 更新标签
  # ------------------------
+ 'intersection',                        # 交集
+ 'intersection_update',                 # 交集，更新
+ 'union',                               # 并集
+ 'difference',                          # 差集
+ 'difference_update',                   # 差集，更新
+ 'issubset',                            # 子集
+ 'isupperset',                          # 超集
+ # ------------------------
  '_log',                                # 日志对象（准备自动记录日志使用，还未实现）
  'width',                               # 图像宽度
  'height',                              # 图像高度
@@ -99,6 +109,18 @@ from ..utils.DecoratorUtil import DecoratorUtil
 """
 
 
+# todo 将 self.img 从 PIL 结构保存为 ndarry 结构，使用空间换取时间
+
+# todo 直接对图像矩阵进行处理，而不是对 PIL 对象进行处理，看看是不是快很多
+
+# todo 查看图片三个波段反了是因为，用的 cv2.imwrite() 保存的图片
+
+# todo crop_dete_obj 等于 crop_and_save 不用把同样的功能实现两遍
+
+# fixme 获取小图截图范围的时候需要看看是不是 RGB 三通道是反的，是不是需要处理一下
+
+
+
 class DeteRes(ResBase, ABC):
     """检测结果"""
 
@@ -107,10 +129,6 @@ class DeteRes(ResBase, ABC):
         self._alarms = []
         self._log = log
         super().__init__(xml_path, assign_img_path, json_dict, redis_conn_info=redis_conn_info, img_redis_key=img_redis_key)
-        
-        self.img_ndarry = None
-
-
 
     def __contains__(self, item):
         """是否包含元素"""
@@ -130,11 +148,19 @@ class DeteRes(ResBase, ABC):
         if not isinstance(other, DeteRes):
             raise TypeError("should be DeteRes")
 
-        for each_dete_obj in other.alarms:
+        res = self.deep_copy()
+        for each_dete_obj in other:
             # 不包含这个元素的时候进行添加
             if each_dete_obj not in self:
-                self._alarms.append(each_dete_obj)
-        return self
+                res.add_obj_2(each_dete_obj)
+        return res
+
+    def __sub__(self, other):
+        """DeteRes之间相减"""
+        res = self.deep_copy()
+        for each_dete_obj in other:
+            res.del_dete_obj(each_dete_obj)
+        return res
 
     def __len__(self):
         """返回要素的个数"""
@@ -156,6 +182,11 @@ class DeteRes(ResBase, ABC):
             self._parse_json_info()
 
     # ------------------------------------------ transform -------------------------------------------------------------
+    @property
+    def alarms(self):
+        """获取属性自动进行排序"""
+        # return sorted(self._alarms, key=lambda x:x.id)
+        return self._alarms
 
     def _parse_xml_info(self):
         """解析 xml 中存储的检测结果"""
@@ -175,6 +206,9 @@ class DeteRes(ResBase, ABC):
 
         if 'folder' in xml_info:
             self.folder = xml_info['folder']
+
+        if "des" in xml_info:
+            self.des = xml_info["des"]
 
         # 解析 object 信息
         for each_obj in xml_info['object']:
@@ -241,6 +275,9 @@ class DeteRes(ResBase, ABC):
         if 'folder' in json_info:
             self.folder = json_info['folder']
 
+        if 'des' in json_info:
+            self.folder = json_info['des']
+
         # 解析 object 信息
         if 'object' in json_info:
             for each_obj in JsonUtil.load_data_from_json_str(json_info['object']):
@@ -270,11 +307,11 @@ class DeteRes(ResBase, ABC):
                     self.add_obj_2(each_dete_obj)
                     # self.add_angle_obj(cx, cy, w, h, angle, tag=each_obj['name'], conf=float(each_obj['prob']),assign_id=int(each_obj['id']), describe=str(each_obj['des']))
 
-    def save_to_xml(self, save_path, assign_alarms=None):
+    def save_to_xml(self, save_path, assign_alarms=None, format='normal'):
         """保存为 xml 文件"""
-        xml_info = {'size': {'height': str(self.height), 'width': str(self.width), 'depth': '3'},
+        xml_info = {'size': {'height': str(int(self.height)), 'width': str(int(self.width)), 'depth': '3'},
                     'filename': self.file_name, 'path': self.img_path, 'object': [], 'folder': self.folder,
-                    'segmented': "", 'source': ""}
+                    'segmented': "", 'source': "", "des": ""}
 
         if assign_alarms is None:
             alarms = self._alarms
@@ -296,14 +333,17 @@ class DeteRes(ResBase, ABC):
                 xml_info['object'].append(each_obj)
 
         # 保存为 xml
-        save_to_xml(xml_info, xml_path=save_path)
+        if format == 'normal':
+            save_to_xml(xml_info, xml_path=save_path)
+        elif format == 'wuhan':
+            save_to_xml_wh_format(xml_info, xml_path=save_path)
 
     def save_to_json(self, assign_alarms=None):
         """转为 json 结构"""
 
         json_dict = {'size': JsonUtil.save_data_to_json_str({'height': int(self.height), 'width': int(self.width), 'depth': '3'}),
                     'filename': self.file_name, 'path': self.img_path, 'object': [], 'folder': self.folder,
-                    'segmented': "", 'source': ""}
+                    'segmented': "", 'source': "", "des":self.des}
         # 可以指定输出的 alarms
         if assign_alarms is None:
             alarms = self._alarms
@@ -333,6 +373,7 @@ class DeteRes(ResBase, ABC):
         # todo 会生成两个文件 （1）classes.txt 存放类别信息 （2）文件名.txt 存放标注信息，tag mx my w h , mx my 为中心点坐标
         pass
 
+    # @DecoratorUtil.time_this
     def crop_dete_obj(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None):
         """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
         * augment_parameter = [0.5, 0.5, 0.2, 0.2]
@@ -398,7 +439,76 @@ class DeteRes(ResBase, ABC):
             # each_crop.save(each_save_path, quality=95)
             each_crop.save(each_save_path)
 
-    def parse_txt_info(self, classes_path, record_path):
+    @DecoratorUtil.time_this
+    def crop_dete_obj_new(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None):
+        """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
+        * augment_parameter = [0.5, 0.5, 0.2, 0.2]
+        """
+        # fixme 存储 crop 存的文件夹，
+
+        if self.img_ndarry is None:
+            self.img_ndarry = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+        #
+        if assign_img_name is not None:
+            img_name = assign_img_name
+        else:
+            if self.file_name:
+                img_name = os.path.split(self.file_name)[1][:-4]
+            elif self.img_path is not None :
+                img_name = os.path.split(self.img_path)[1][:-4]
+            else:
+                raise ValueError("need self.img_path or assign_img_name")
+
+        tag_count_dict = {}
+        #
+        for each_obj in self._alarms:
+            # 只支持正框的裁切
+            if not isinstance(each_obj, DeteObj):
+                continue
+            # 截图的区域
+            bndbox = [each_obj.x1, each_obj.y1, each_obj.x2, each_obj.y2]
+            # 排除掉不需要保存的 tag
+            if include_tag_list is not None:
+                if each_obj.tag not in include_tag_list:
+                    continue
+
+            if not exclude_tag_list is None:
+                if each_obj.tag in exclude_tag_list:
+                    continue
+
+            # 计算这是当前 tag 的第几个图片
+            if each_obj.tag not in tag_count_dict:
+                tag_count_dict[each_obj.tag] = 0
+            else:
+                tag_count_dict[each_obj.tag] += 1
+            # 图片扩展
+            if augment_parameter is not None:
+                bndbox = ResTools.region_augment(bndbox, [self.width, self.height], augment_parameter=augment_parameter)
+
+            # 为了区分哪里是最新加上去的，使用特殊符号 -+- 用于标志
+            if split_by_tag is True:
+                each_save_dir = os.path.join(save_dir, each_obj.tag)
+                if not os.path.exists(each_save_dir):
+                    os.makedirs(each_save_dir)
+            else:
+                each_save_dir = save_dir
+
+            # fixme 图像范围进行扩展，但是标注的范围不进行扩展，这边要注意
+            each_name_str = each_obj.get_name_str()
+            each_save_path = os.path.join(each_save_dir, '{0}-+-{1}.jpg'.format(img_name, each_name_str))
+            #
+            each_obj.crop_path = each_save_path
+            #
+            # each_crop = self.img.crop(bndbox)
+
+            each_crop = self.img_ndarry[bndbox[1]:bndbox[3], bndbox[0]:bndbox[2], :]
+            cv2.imencode(each_save_path, each_crop)[1].tofile(each_save_path)
+
+            # 保存截图
+            # each_crop.save(each_save_path, quality=95)
+            # each_crop.save(each_save_path)
+
+    def _parse_txt_info(self, classes_path, record_path):
         """解析 txt 信息"""
         # todo txt 信息中不包含图像的大小，波段数等信息，保存和读取 txt 标注的信息比较鸡肋
         pass
@@ -439,27 +549,7 @@ class DeteRes(ResBase, ABC):
         assign_dete_obj = self.get_dete_obj_by_id(assign_id=assign_id)
         return self.get_sub_img_by_dete_obj(assign_dete_obj, augment_parameter, RGB=RGB, assign_shape_min=assign_shape_min)
 
-    def get_sub_img_by_dete_obj_new(self, assign_dete_obj, augment_parameter=None, RGB=True, assign_shape_min=False):
-        if self.img_ndarry is None:
-            self.img_ndarry = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
-        
-        if augment_parameter is None:
-            crop_range = [assign_dete_obj.x1, assign_dete_obj.y1, assign_dete_obj.x2, assign_dete_obj.y2]
-
-        else:
-            crop_range = [assign_dete_obj.x1, assign_dete_obj.y1, assign_dete_obj.x2, assign_dete_obj.y2]
-            crop_range = ResTools.region_augment(crop_range, [self.width, self.height], augment_parameter=augment_parameter)
-
-        img_crop = self.img_ndarry[crop_range[1]: crop_range[3], crop_range[0]: crop_range[2], :]
-        
-        if RGB:
-            return img_crop
-            #return cv2.cvtColor(img_crop, cv2.COLOR_RGB2BGR)
-        else:
-            #return img_crop
-            return cv2.cvtColor(img_crop, cv2.COLOR_RGB2BGR)
-
-
+    # @DecoratorUtil.time_this
     def get_sub_img_by_dete_obj(self, assign_dete_obj, augment_parameter=None, RGB=True, assign_shape_min=False):
         """根据指定的 deteObj """
 
@@ -500,6 +590,33 @@ class DeteRes(ResBase, ABC):
         else:
             return cv2.cvtColor(im_array, cv2.COLOR_RGB2BGR)
 
+    @DecoratorUtil.time_this
+    def get_sub_img_by_dete_obj_new(self, assign_dete_obj, augment_parameter=None, RGB=True, assign_shape_min=False):
+        """根据指定的 deteObj """
+
+        if self.img_ndarry is None:
+            img_ndarry = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+            # self.img_ndarry = cv2.cvtColor(img_ndarry, cv2.COLOR_RGB2BGR)
+
+        if augment_parameter is None:
+            crop_range = [assign_dete_obj.x1, assign_dete_obj.y1, assign_dete_obj.x2, assign_dete_obj.y2]
+        else:
+            crop_range = [assign_dete_obj.x1, assign_dete_obj.y1, assign_dete_obj.x2, assign_dete_obj.y2]
+            crop_range = ResTools.region_augment(crop_range, [self.width, self.height], augment_parameter=augment_parameter)
+
+        img_crop = self.img_ndarry[crop_range[1]: crop_range[3], crop_range[0]: crop_range[2], :]
+
+        # # change size
+        # if assign_shape_min:
+        #     w, h = img_crop.shape[:2]
+        #     ratio = assign_shape_min/min(w, h)
+        #     img_crop = img_crop.resize((int(ratio*w), int(ratio*h)))
+
+        if RGB:
+            return img_crop
+        else:
+            return cv2.cvtColor(img_crop, cv2.COLOR_RGB2BGR)
+
     @staticmethod
     def get_sub_img_by_dete_obj_from_crop(assign_dete_obj, RGB=True, assign_shape_min=False):
         """根据指定的 deteObj 读取裁剪的 小图"""
@@ -510,6 +627,19 @@ class DeteRes(ResBase, ABC):
         for each_dete_obj in self:
             each_dete_obj.del_crop_img()
 
+    @DecoratorUtil.time_this
+    def get_img_array_new(self, RGB=True):
+        """获取self.img对应的矩阵信息"""
+
+        if self.img_ndarry is None:
+            self.img_ndarry = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+
+        if RGB:
+            return cv2.cvtColor(self.img_ndarry, cv2.COLOR_RGB2BGR)
+        else:
+            return self.img_ndarry
+
+    @DecoratorUtil.time_this
     def get_img_array(self, RGB=True):
         """获取self.img对应的矩阵信息"""
         if not self.img:
@@ -622,6 +752,11 @@ class DeteRes(ResBase, ABC):
         # return color_dict
         return img
 
+    def do_func(self, assign_func):
+        """对所有元素进行指定操作"""
+        for each_dete_obj in self._alarms:
+            assign_func(each_dete_obj)
+
     def do_nms(self, threshold=0.1, ignore_tag=False):
         """对结果做 nms 处理，"""
         # 参考：https://blog.csdn.net/shuzfan/article/details/52711706
@@ -700,24 +835,25 @@ class DeteRes(ResBase, ABC):
 
     # ------------------------------------------------ filter ----------------------------------------------------------
 
-    def filter_by_area(self, area_th):
-        """根据面积大小（像素个数）进行筛选"""
+    def filter_by_area(self, area_th, update=True):
+        """根据面积大小（像素个数）进行筛选, update 是否对 self 进行更新"""
         new_alarms, del_alarms = [], []
         for each_dete_tag in self._alarms:
             if each_dete_tag.get_area() >= area_th:
                 new_alarms.append(each_dete_tag)
             else:
                 del_alarms.append(each_dete_tag)
-        self._alarms = new_alarms
+        if update:
+            self._alarms = new_alarms
         return del_alarms
 
-    def filter_by_area_ratio(self, ar=0.0006):
+    def filter_by_area_ratio(self, ar=0.0006, update=True):
         """根据面积比例进行删选"""
         # get area
         th_area = float(self.width * self.height) * ar
-        self.filter_by_area(area_th=th_area)
+        self.filter_by_area(area_th=th_area, update=update)
 
-    def filter_by_tags(self, need_tag=None, remove_tag=None):
+    def filter_by_tags(self, need_tag=None, remove_tag=None, update=True):
         """根据 tag 类型进行筛选"""
         new_alarms, del_alarms = [], []
 
@@ -741,10 +877,11 @@ class DeteRes(ResBase, ABC):
                     new_alarms.append(each_dete_tag)
                 else:
                     del_alarms.append(each_dete_tag)
-        self._alarms = new_alarms
-        return del_alarms
+        if update:
+            self._alarms = new_alarms
+        return new_alarms
 
-    def filter_by_conf(self, conf_th, assign_tag_list=None):
+    def filter_by_conf(self, conf_th, assign_tag_list=None, update=True):
         """根据置信度进行筛选，指定标签就能对不同标签使用不同的置信度"""
 
         if not(isinstance(conf_th, int) or isinstance(conf_th, float)):
@@ -762,10 +899,12 @@ class DeteRes(ResBase, ABC):
                 new_alarms.append(each_dete_obj)
             else:
                 del_alarms.append(each_dete_obj)
-        self._alarms = new_alarms
-        return del_alarms
 
-    def filter_by_mask(self, mask, cover_index_th=0.5, need_in=True):
+        if update:
+            self._alarms = new_alarms
+        return new_alarms
+
+    def filter_by_mask(self, mask, cover_index_th=0.5, need_in=True, update=True):
         """使用多边形 mask 进行过滤，mask 支持任意凸多边形，设定覆盖指数, mask 一连串的点连接起来的 [[x1,y1], [x2,y2], [x3,y3]], need_in is True, 保留里面的内容，否则保存外面的"""
         new_alarms, del_alarms = [], []
         for each_dete_obj in self._alarms:
@@ -777,10 +916,22 @@ class DeteRes(ResBase, ABC):
                 new_alarms.append(each_dete_obj)
             else:
                 del_alarms.append(each_dete_obj)
-        self._alarms = new_alarms
-        return del_alarms
+        if update:
+            self._alarms = new_alarms
+        return new_alarms
 
-    def filter_by_func(self, func):
+    def filter_by_dete_res_mask(self, mask_dete_res, cover_index_th=0.5, update=True):
+        """将一个 deteRes 作为 mask 过滤 self"""
+        dete_res_temp = DeteRes()
+        for each_dete_obj in mask_dete_res:
+            each_dete_res = self.deep_copy(copy_img=False)
+            each_dete_res.filter_by_mask(each_dete_obj.get_points(), cover_index_th)
+            dete_res_temp += each_dete_res
+        if update:
+            self.reset_alarms(dete_res_temp.alarms)
+        return dete_res_temp
+
+    def filter_by_func(self, func, update=True):
         """使用指定函数对 DeteObj 进行过滤"""
         new_alarms, del_alarms = [], []
         for each_dete_obj in self._alarms:
@@ -788,10 +939,11 @@ class DeteRes(ResBase, ABC):
                 new_alarms.append(each_dete_obj)
             else:
                 del_alarms.append(each_dete_obj)
-        self._alarms = new_alarms
-        return del_alarms
+        if update:
+            self._alarms = new_alarms
+        return new_alarms
 
-    def filter_by_topn(self, nn):
+    def filter_by_topn(self, nn, update=True):
         # 远景小目标过滤, 相对小的，从大到小排序，取前nn名的平均值/2作为阈值(籍天明，ljc)
         obj_area_list = []
         for dete_obj in self._alarms:
@@ -802,7 +954,53 @@ class DeteRes(ResBase, ABC):
         if nn < len(obj_area_list):
             threshold = np.average(obj_area_list[:nn]) / 2
         # filter by area
-        self.filter_by_area(threshold)
+        return self.filter_by_area(threshold, update=update)
+
+    # ----------------------------------------------- set --------------------------------------------------------------
+
+    def intersection(self, other):
+        dete_res_tmp = self.deep_copy()
+        dete_res_tmp.reset_alarms()
+        #
+        for each_dete_obj in self:
+            if each_dete_obj in other:
+                dete_res_tmp.add_obj_2(each_dete_obj)
+        return dete_res_tmp
+
+    def intersection_update(self, other):
+        res = self.intersection(other)
+        self.reset_alarms(res.alarms)
+
+    def union(self, other):
+        """就是加法操作"""
+        dete_res_tmp = self.deep_copy()
+        return dete_res_tmp + other
+
+    def difference(self, other):
+        """在 self 不在 other 中的"""
+        diff_dete_res = self.deep_copy()
+        for each_dete_obj in self:
+            if each_dete_obj in other:
+                diff_dete_res.del_dete_obj(each_dete_obj)
+        return diff_dete_res
+
+    def difference_update(self, other):
+        res = self.difference(other)
+        self.reset_alarms(res.alarms)
+
+    def issubset(self, other):
+        """是否为子集"""
+        for each_dete_obj in self:
+            if each_dete_obj not in other:
+                return False
+        return True
+
+    def isupperset(self, other):
+        """是否为超集"""
+        for each_dete_obj in other:
+            if each_dete_obj not in self:
+                return False
+        return True
 
     # ----------------------------------------------- del --------------------------------------------------------------
 
@@ -878,7 +1076,7 @@ class DeteRes(ResBase, ABC):
                   }
 
         each_info = {}
-        for each_dete_obj in self.alarms:
+        for each_dete_obj in self._alarms:
             each_info['position'] = [each_dete_obj.x1, each_dete_obj.y1, each_dete_obj.x2-each_dete_obj.x1, each_dete_obj.y2-each_dete_obj.y1]
             each_info['class'] = each_dete_obj.tag
             each_info['possibility'] = each_dete_obj.conf
@@ -926,12 +1124,6 @@ class DeteRes(ResBase, ABC):
             a.parse_auto = True
             return a
 
-    @property
-    def alarms(self):
-        """获取属性自动进行排序"""
-        # return sorted(self._alarms, key=lambda x:x.id)
-        return self._alarms
-
     # ------------------------------------------------------------------------------------------------------------------
 
     def offset(self, x, y):
@@ -940,10 +1132,15 @@ class DeteRes(ResBase, ABC):
             each_dete_obj.do_offset(x, y)
 
     # @DecoratorUtil.time_this
-    def crop_and_save(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None):
+    def crop_and_save(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None, save_augment=False):
         """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
         * augment_parameter = [0.5, 0.5, 0.2, 0.2]
+        * save_augment 是否保存为扩展后的范围，还是之前的范围
         """
+
+        if len(self._alarms) == 0:
+            # 要是没有可以剪切的要素就不浪费时间进行剪切了
+            return
 
         if not self.img:
             raise ValueError ("need img_path or img")
@@ -992,17 +1189,97 @@ class DeteRes(ResBase, ABC):
                 each_save_dir = save_dir
 
             # fixme 图像范围进行扩展，但是标注的范围不进行扩展，这边要注意
-            each_name_str = each_obj.get_name_str()
+            if save_augment:
+                each_name_str = each_obj.get_name_str(assign_loc=bndbox)
+            else:
+                each_name_str = each_obj.get_name_str()
             each_save_path = os.path.join(each_save_dir, '{0}-+-{1}.jpg'.format(img_name, each_name_str))
 
-            # todo 对 bndbox 的范围进行检查
-            each_crop = self.img.crop(bndbox)
-            # 对截图的图片自定义操作, 可以指定缩放大小之类的
-            if method is not None:
-                each_crop = method(each_crop)
-            # 保存截图
-            # each_crop.save(each_save_path, quality=95)
-            each_crop.save(each_save_path)
+            try:
+                # todo 对 bndbox 的范围进行检查
+                each_crop = self.img.crop(bndbox)
+                # 对截图的图片自定义操作, 可以指定缩放大小之类的
+                if method is not None:
+                    each_crop = method(each_crop)
+                # 保存截图
+                # each_crop.save(each_save_path, quality=95)
+                each_crop.save(each_save_path)
+            except Exception as e:
+                # 当遇到错误的图片会报错，
+                # todo 图片损坏使用 cv2.crop 截取图片不会报错，是否考虑使用 cv2 的截图获取部分破损的图片
+                print(e)
+
+    def crop_and_save_new(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False, include_tag_list=None, assign_img_name=None, save_augment=False):
+        """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
+        * augment_parameter = [0.5, 0.5, 0.2, 0.2]
+        * save_augment 是否保存为扩展后的范围，还是之前的范围
+        """
+
+        if self.img_ndarry is None:
+            self.img_ndarry = cv2.imdecode(np.fromfile(self.img_path, dtype=np.uint8), 1)
+        #
+        if assign_img_name is not None:
+            img_name = assign_img_name
+        else:
+            if self.img_path is not None :
+                img_name = os.path.split(self.img_path)[1][:-4]
+            else:
+                raise ValueError("need self.img_path or assign_img_name")
+
+        tag_count_dict = {}
+        #
+        for each_obj in self._alarms:
+            # 只支持正框的裁切
+            if not isinstance(each_obj, DeteObj):
+                continue
+            # 截图的区域
+            bndbox = [each_obj.x1, each_obj.y1, each_obj.x2, each_obj.y2]
+            # 排除掉不需要保存的 tag
+            if include_tag_list is not None:
+                if each_obj.tag not in include_tag_list:
+                    continue
+
+            if not exclude_tag_list is None:
+                if each_obj.tag in exclude_tag_list:
+                    continue
+
+            # 计算这是当前 tag 的第几个图片
+            if each_obj.tag not in tag_count_dict:
+                tag_count_dict[each_obj.tag] = 0
+            else:
+                tag_count_dict[each_obj.tag] += 1
+            # 图片扩展
+            if augment_parameter is not None:
+                bndbox = ResTools.region_augment(bndbox, [self.width, self.height], augment_parameter=augment_parameter)
+
+            # 为了区分哪里是最新加上去的，使用特殊符号 -+- 用于标志
+            if split_by_tag is True:
+                each_save_dir = os.path.join(save_dir, each_obj.tag)
+                if not os.path.exists(each_save_dir):
+                    os.makedirs(each_save_dir)
+            else:
+                each_save_dir = save_dir
+
+            # fixme 图像范围进行扩展，但是标注的范围不进行扩展，这边要注意
+            if save_augment:
+                each_name_str = each_obj.get_name_str(assign_loc=bndbox)
+            else:
+                each_name_str = each_obj.get_name_str()
+            each_save_path = os.path.join(each_save_dir, '{0}-+-{1}.jpg'.format(img_name, each_name_str))
+
+            try:
+                # todo 对 bndbox 的范围进行检查
+                each_crop = self.img.crop(bndbox)
+                # 对截图的图片自定义操作, 可以指定缩放大小之类的
+                if method is not None:
+                    each_crop = method(each_crop)
+                # 保存截图
+                # each_crop.save(each_save_path, quality=95)
+                each_crop.save(each_save_path)
+            except Exception as e:
+                # 当遇到错误的图片会报错，
+                # todo 图片损坏使用 cv2.crop 截取图片不会报错，是否考虑使用 cv2 的截图获取部分破损的图片
+                print(e)
 
     def crop_angle_and_save(self, save_dir, augment_parameter=None, method=None, exclude_tag_list=None, split_by_tag=False):
         """将指定的类型的结果进行保存，可以只保存指定的类型，命名使用标准化的名字 fine_name + tag + index, 可指定是否对结果进行重采样，或做特定的转换，只要传入转换函数
@@ -1041,7 +1318,7 @@ class DeteRes(ResBase, ABC):
                 w += w * augment_parameter[0]
                 h += h * augment_parameter[1]
             # 裁剪
-            each_crop = ResTools.crop_angle_rect(self.img_path, ((cx, cy), (w, h), angle))
+            each_crop = ResTools.crop_angle_rect(self.get_img_array(), ((cx, cy), (w, h), angle))
             if method is not None: each_crop = method(each_crop)
             # crop = Image.fromarray(each_crop)
             # crop.save(each_save_path)
@@ -1166,75 +1443,3 @@ class DeteRes(ResBase, ABC):
                 new_alarms.append(each_obj)
         self._alarms = new_alarms
 
-    def get_obj_middle_points_by_tags(self,tags):
-        points = []
-        for tag in tags:
-            objs = self.get_dete_obj_list_by_tag([tag])
-            for obj in objs:
-                points.append(((obj.x1+obj.x2)/2,(obj.y1+obj.y2)/2))
-        return points
-
-    def get_obj_right_points_by_tags(self,tags):
-        points = []
-        for tag in tags:
-            objs = self.get_dete_obj_list_by_tag([tag])
-            for obj in objs:
-                points.append((obj.x2,(obj.y1+obj.y2)/2))
-        return points
-
-
-    def fuse_tag1_tag2_into_tag3_with_func(self,tag1,tag2,tag3,func):
-        objs1 = self.get_dete_obj_list_by_tag([tag1])
-        objs2 = self.get_dete_obj_list_by_tag([tag2])
-        for obj1 in objs1:
-            for obj2 in objs2:
-                if func(obj1,obj2) == True:
-                    obj1.tag = 'deleteObj'
-                    obj2.tag = 'deleteObj'
-                    obj3 = ResTools.fuse_objs(obj1,obj2,tag3)
-                    self.add_obj_2(obj3)
-        self.filter_by_tags(remove_tag = ['deleteObj'])
-
-    def filter_tag1_by_tag2_with_nms(self,tag1,tag2,threshold=0.5):
-        tag1_list = self.filter_by_tags(remove_tag = tag1)
-        tag2_list = self.filter_by_tags(remove_tag = tag2)
-        del_list = []
-        for i,tag1 in enumerate(tag1_list):
-            for tag2 in tag2_list:
-                if ResTools.cal_iou(tag1,tag2,True) > threshold:
-                    del_list.append(i)
-        for i,tag1 in enumerate(tag1_list):
-            if i in del_list:
-                continue
-            else:
-                self.add_obj_2(tag1)
-
-    def filter_by_boundary(self,xmin,xmax,ymin,ymax,need_tags=[]):
-        new_alarms = []
-        for obj in self._alarms:
-            if obj.tag in need_tags or len(need_tags) == 0:
-                if obj.x1 < xmin or obj.x2 > xmax or obj.y1 < ymin or obj.y2 > ymax:
-                    continue
-                else:
-                    new_alarms.append(obj)
-            else:
-                new_alarms.append(obj)
-        self._alarms = new_alarms
-
-    def do_augment_short_long(self, augment_parameter_short, augment_parameter_long, is_relative=True, need_tags=[]):
-        """对检测框进行扩展"""
-
-        # todo 这个函数不该存在，想办法融合到其他数据中
-        try:
-            for each_dete_obj in self._alarms:
-                if isinstance(each_dete_obj, DeteObj):
-                    if each_dete_obj.tag in need_tags or len(need_tags) == 0:
-                        if (each_dete_obj.x2-each_dete_obj.x1) > (each_dete_obj.y2-each_dete_obj.y1):
-                            augment_parameter_long.extend(augment_parameter_short)
-                            each_dete_obj.do_augment(augment_parameter=augment_parameter_long, width=self.width, height=self.height, is_relative=is_relative)
-                        else:
-                            augment_parameter_short.extend(augment_parameter_long)
-                            each_dete_obj.do_augment(augment_parameter=augment_parameter_short, width=self.width, height=self.height, is_relative=is_relative)
-        except Exception as e:
-            print(e.__traceback__.tb_lineno)
-            print(e)

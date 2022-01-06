@@ -96,14 +96,21 @@ def get_img_path_list_from_sign_dir(sign_txt_path, img_dir):
 
 def get_img_path_list_from_assgin_img_dir(assign_img_dir, script_num, script_index):
     """get img path list from assign dir"""
-    if os.path.exists(assign_img_dir):
-        res_list = []
+
+    res_list = []
+
+    if isinstance(assign_img_dir, list):
+        img_path_list = assign_img_dir
+    elif os.path.exists(assign_img_dir):
         img_path_list = list(FileOperationUtil.re_all_file(assign_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
-        for each_img_index in range(script_index - 1, len(img_path_list), script_num):
-            res_list.append(img_path_list[each_img_index])
-        #
-        if len(res_list) != 0:
-            return res_list, assign_img_dir
+    else:
+        raise ValueError("assign_img_dir should be folder path or img path list ")
+
+    for each_img_index in range(script_index - 1, len(img_path_list), script_num):
+        res_list.append(img_path_list[each_img_index])
+    #
+    if len(res_list) != 0:
+        return res_list, assign_img_dir
 
 def get_model_list_from_img_name(img_name, M_list):
     """从文件名中获取 model_list，传入的是文件名不是完整的路径"""
@@ -144,6 +151,7 @@ def model_dete(img_path, model_dict, model_list):
     each_save_path_xml_error = os.path.join(save_error_dir, each_img_name[:-4] + '.xml')
     each_save_path_jpg = os.path.join(res_save_dir, each_img_name)
     #
+    start_time = time.time()
 
     try:
         # todo 下面的逻辑使用一个循环进行维护
@@ -209,6 +217,10 @@ def model_dete(img_path, model_dict, model_list):
 
         # update tags
         dete_res_all.update_tags(tag_code_dict)
+
+        # end time
+        end_time = time.time()
+        dete_res_all.des = "{0}-{1}".format(start_time, end_time)
 
         # save xml
         if len(dete_res_all) > 0:

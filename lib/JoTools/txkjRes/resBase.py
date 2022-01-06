@@ -33,6 +33,7 @@ class ResBase():
         self.redis_conn = None
         self.redis_conn_info = redis_conn_info
         self.img_redis_key = img_redis_key
+        self.des = ""
         #
         self.img_ndarry = None                              # 矩阵数据 ndarry
 
