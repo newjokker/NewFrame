@@ -99,10 +99,14 @@ def get_img_path_list_from_assgin_img_dir(assign_img_dir, script_num, script_ind
 
     res_list = []
 
-    if isinstance(assign_img_dir, list):
-        img_path_list = assign_img_dir
-    elif os.path.exists(assign_img_dir):
+    if os.path.isdir(assign_img_dir):
         img_path_list = list(FileOperationUtil.re_all_file(assign_img_dir, endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+    elif os.path.isfile(assign_img_dir):
+        # 读取文本中的每一行，每一行就是一个路径
+        img_path_list = []
+        with open(assign_img_dir, 'r') as txt_file:
+            for each_line in txt_file:
+                img_path_list.append(each_line.strip())
     else:
         raise ValueError("assign_img_dir should be folder path or img path list ")
 
