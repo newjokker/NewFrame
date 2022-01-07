@@ -58,12 +58,14 @@ class TZserver(object):
         for i in range(1, self.mul_progress_num+1):
             each_txt_path = os.path.join(self.sign_dir, 'res_txt', "{0}.txt".format(i))
             if not os.path.exists(each_txt_path):
-                # 模型结束之后只让处理最后一次的 xml
-                if self.model_end:
-                    return False
-                else:
-                    self.model_end = True
-        return True
+                return False
+
+        # 模型结束之后只让处理最后一次的 xml
+        if self.model_end:
+            return True
+        else:
+            self.model_end = True
+            return False
 
     def post_res(self, each_xml_path, headers=None):
 
