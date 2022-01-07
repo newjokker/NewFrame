@@ -18,13 +18,8 @@ import requests
 from flask import Blueprint, request, jsonify
 import json
 
-# todo 增加了推送检测结果到指定位置的功能
 
-# todo 会提前告诉服务要检测多少张图片，检测完了就会直接关掉这个服务（超时也会关闭这个服务）
-
-# todo 对于每一次检测请求，会新建一个随机的文件夹，xml_tmp，xml_res，sign_end_txt_dir 都放在这边
-
-# todo 图像先进行一次解析，不能出现一样的文件路径
+# todo 图像先进行一次解析，不能出现一样的文件名
 
 # test taizhou_server.py
 # python3 scripts/server/taizhou/taizhou_server.py --xml_tmp /home/ldq/NewFrame_TaiZhou/tmpfiles/xml_tmp --xml_res /home/ldq/NewFrame_TaiZhou/tmpfiles/xml_res --post_url 192.168.3.000 --img_count 10 --mul_progress_num 1 --sign_end_txt_dir /home/ldq/NewFrame_TaiZhou/tmpfiles/all_models_flow --print_process True
@@ -51,6 +46,8 @@ class TZserver(object):
         self.start_time = time.time()
         #
         self.batch_id = batch_id
+        #
+        self.model_end = False
 
     def if_end(self):
         """根据 sign 文件夹中的信息，判断是否已经结束 | 根据已检测的图片和图片的总数是否相等"""
@@ -58,11 +55,15 @@ class TZserver(object):
         if self.img_index >= self.img_count:
             return True
 
-        # for i in range(1, self.mul_progress_num+1):
-        #     each_txt_path = os.path.join(self.sign_dir, 'res_txt', "{0}.txt".format(i))
-        #     if not os.path.exists(each_txt_path):
-        #         return False
-        # return True
+        for i in range(1, self.mul_progress_num+1):
+            each_txt_path = os.path.join(self.sign_dir, 'res_txt', "{0}.txt".format(i))
+            if not os.path.exists(each_txt_path):
+                # 模型结束之后只让处理最后一次的 xml
+                if self.model_end:
+                    return False
+                else:
+                    self.model_end = True
+        return True
 
     def post_res(self, each_xml_path, headers=None):
 
@@ -84,8 +85,11 @@ class TZserver(object):
             id += 1
             alarms.append([id, each_dete_obj.x1, each_dete_obj.y1, each_dete_obj.x2, each_dete_obj.y2, each_dete_obj.tag, each_dete_obj.conf])
         # time
-        des = dete_res.des.split("-")
-        start_time, end_time = float(des[0]), float(des[1])
+        if dete_res.des in ["", None]:
+            start_time, end_time = -1, -1
+        else:
+            des = dete_res.des.split("-")
+            start_time, end_time = float(des[0]), float(des[1])
         #
         data["file_name"] = dete_res.file_name
         data["start_time"] = start_time
@@ -100,7 +104,7 @@ class TZserver(object):
         try:
             # response_data = requests.post(url=self.post_url,  data=json.dumps(data), headers=headers)
             print('-'*50)
-            print("* post : {0} data : {1}".format(self.post_url, data))
+            print("* img index {0} post : {1} data : {2}".format(self.img_index, self.post_url, data))
             # return response_data
         except Exception as e:
             print("----error----")
@@ -111,13 +115,21 @@ class TZserver(object):
         #
         while True:
             if self.if_end():
+                print("----- server finished ------")
                 return
 
             # ----------------------------------------------------------------------------------------------------------
             xml_path_list = list(FileOperationUtil.re_all_file(self.xml_tmp, endswitch=['.xml']))
             #
             for each_xml_path in xml_path_list:
-                self.post_res(each_xml_path)
+                # fixme post error, wait for next post | or just skip
+                try:
+                    self.post_res(each_xml_path)
+                except Exception as e:
+                    print(e)
+                    print(e.__traceback__.tb_frame.f_globals["__file__"])
+                    print(e.__traceback__.tb_lineno)
+                    continue
                 #
                 if os.path.exists(each_xml_path):
                     new_xml_path = os.path.join(self.xml_res, os.path.split(each_xml_path)[1])
@@ -135,7 +147,8 @@ class TZserver(object):
                 print("* {0} , dete {1} img , speed : {2} pic/second , average speed : {3} pic/second".format(self.img_index, dete_img_num, dete_speed, average_speed))
 
             # wait
-            time.sleep(5)
+            time.sleep(1)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Tensorflow Faster R-CNN demo')

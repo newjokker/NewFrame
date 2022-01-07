@@ -42,8 +42,13 @@ def start_dete():
         # img_path_list = request.form['img_path_list']
         # post_usr = request.form['post_url']
         model_list = ['nc']
-        img_path_list = [r"/home/ldq/input_dir/JPEGImages/0a6509ccee8414f107d7af90a8fe8017.jpg",
-                         r"/home/ldq/input_dir/JPEGImages/0b03f77cd53aad32d5019872ae034e9c.jpg"]
+
+        # img_path_list = [r"/home/ldq/input_dir/JPEGImages/0a6509ccee8414f107d7af90a8fe8017.jpg",
+        #                  r"/home/ldq/input_dir/JPEGImages/0b03f77cd53aad32d5019872ae034e9c.jpg"]
+
+        img_path_list = list(FileOperationUtil.re_all_file(r"/home/ldq/input_dir/JPEGImages", endswitch=['.jpg', '.JPG', '.png', '.PNG']))
+
+
         post_usr = r"192.168.3.101:2020/test"
         batch_id = "no_batch_id"
         #

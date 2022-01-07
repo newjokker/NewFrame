@@ -239,6 +239,9 @@ def model_dete(img_path, model_dict, model_list):
         print(e)
         print(e.__traceback__.tb_frame.f_globals["__file__"])
         print(e.__traceback__.tb_lineno)
+        # end time
+        end_time = time.time()
+        dete_res_all.des = "{0}-{1}".format(start_time, end_time)
         dete_res_all.save_to_xml(each_save_path_xml_error)
 
     # empty cache
